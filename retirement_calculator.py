@@ -10,7 +10,19 @@ st.set_page_config(
     page_icon="💼",
     layout="wide"  # enables wider overall layout
 )
-
+st.markdown(
+    """
+    <style>
+    .block-container {
+        max-width: 1100px;  /* adjust this for how "wide" you want it */
+        padding-left: 3rem;
+        padding-right: 3rem;
+        margin: auto;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 # --- App Header ---
 st.title("💼 Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
