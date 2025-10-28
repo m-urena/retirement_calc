@@ -80,7 +80,7 @@ fig.add_annotation(
     x=ages[-1], y=with_help[-1],
     text=f"${with_help[-1]:,.0f}",
     showarrow=False,
-    font=dict(color="#57A3C4", size=16, family="Segoe UI", bold=True),
+    font=dict(color="#57A3C4", size=17, family="Segoe UI"),
     xanchor="left", yanchor="middle", xshift=10
 )
 
@@ -142,4 +142,4 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.caption("For illustrative purposes only. Assumes annual compounding, 3% annual salary growth, and 12.4% contributions to a 401(k).")
+st.caption("For illustrative purposes only. Assumes 3% annual salary growth, 12.4% of salary contributed annually, and compound growth at 6.5% vs 9.8%.")
