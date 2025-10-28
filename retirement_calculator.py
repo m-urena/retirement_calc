@@ -4,33 +4,11 @@ import numpy as np
 import plotly.graph_objects as go
 from datetime import date
 
-# --- Page setup ---
 st.set_page_config(page_title="Bison Wealth | 401(k) Growth Simulator", page_icon="💼", layout="centered")
-
-# --- Styling ---
-st.markdown("""
-    <style>
-        body, .stApp {
-            background-color: #ffffff;
-            color: #E0E0E0;
-            font-family: 'Segoe UI', sans-serif;
-        }
-        h1, h2, h3 {
-            color: #AFD4E3;
-            font-weight: 600;
-        }
-        .stMetric {
-            background-color: #2C2C2C;
-            border: 1px solid #414546;
-            border-radius: 10px;
-            padding: 8px;
-        }
-    </style>
-""", unsafe_allow_html=True)
 
 # --- Header ---
 st.title("💼 Bison Wealth 401(k) Growth Simulator")
-st.markdown("Visualize how your 401(k) could grow **with and without Bison’s guidance**.")
+st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
 
 # --- Client info ---
 st.subheader("Client Information")
@@ -55,10 +33,10 @@ employer_contrib = colC.number_input("Employer Annual Contribution ($)", min_val
 # --- Constants ---
 target_age = 65
 years = max(0, target_age - age)
-growth_rate_baseline = 0.08
+growth_rate_lonesome = 0.08
 growth_rate_help = 0.1479
 
-# --- Growth calculation ---
+# --- Growth function ---
 def future_value(balance, contrib, rate, years):
     total = balance
     values = [balance]
@@ -68,7 +46,7 @@ def future_value(balance, contrib, rate, years):
     return values
 
 total_contrib = annual_contrib + employer_contrib
-baseline = future_value(balance, total_contrib, growth_rate_baseline, years)
+baseline = future_value(balance, total_contrib, growth_rate_lonesome, years)
 with_help = future_value(balance, total_contrib, growth_rate_help, years)
 ages = list(range(age, target_age + 1))
 
@@ -76,7 +54,7 @@ ages = list(range(age, target_age + 1))
 fig = go.Figure()
 fig.add_trace(go.Scatter(
     x=ages, y=baseline, mode="lines", name="On Your Lonesome (8%)",
-    line=dict(color="#AFD4E3", width=3)
+    line=dict(color="#7D7D7D", width=3)
 ))
 fig.add_trace(go.Scatter(
     x=ages, y=with_help, mode="lines", name="With Help (14.79%)",
@@ -84,17 +62,17 @@ fig.add_trace(go.Scatter(
 ))
 fig.update_layout(
     title=f"Estimated 401(k) Growth for {name}" if name else "Estimated 401(k) Growth",
-    title_font=dict(color="#AFD4E3", size=22),
-    paper_bgcolor="#212121",
-    plot_bgcolor="#212121",
-    xaxis=dict(title="Age", color="#E0E0E0", gridcolor="#414546"),
-    yaxis=dict(title="Portfolio Value ($)", color="#E0E0E0", gridcolor="#414546"),
-    legend=dict(bgcolor="#212121", font=dict(color="#E0E0E0")),
+    title_font=dict(color="#414546", size=22),
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    xaxis=dict(title="Age", color="#414546", gridcolor="#E0E0E0"),
+    yaxis=dict(title="Portfolio Value ($)", color="#414546", gridcolor="#E0E0E0"),
+    legend=dict(bgcolor="white", font=dict(color="#414546")),
     hovermode="x unified"
 )
 st.plotly_chart(fig, use_container_width=True)
 
-# --- Final numbers ---
+# --- Summary metrics ---
 st.markdown("---")
 final_lonesome = baseline[-1]
 final_help = with_help[-1]
