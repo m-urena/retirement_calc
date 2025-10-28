@@ -100,7 +100,7 @@ fig.add_trace(go.Scatter(
     line=dict(color="#57A3C4", width=4)
 ))
 
-# --- End value labels (just past age 65) ---
+# --- End value labels (slightly beyond 65) ---
 fig.add_annotation(
     x=65.3, y=final_lonesome_val,
     text=f"${final_lonesome_val:,.0f}",
@@ -132,10 +132,12 @@ fig.update_layout(
     yaxis=dict(title="Portfolio Value ($)", color="#414546", gridcolor="#E0E0E0"),
     legend=dict(bgcolor="white", font=dict(color="#414546")),
     hovermode="x unified",
-    margin=dict(r=80, t=60, l=60, b=60)
+    margin=dict(l=50, r=140, t=60, b=60),
+    width=1000,  # makes chart wider
+    height=500   # keeps vertical balance
 )
 
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=False)
 
 # --- Metrics + CTA ---
 st.markdown("---")
