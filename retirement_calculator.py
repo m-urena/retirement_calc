@@ -102,8 +102,8 @@ st.markdown(
     f"""
     <div style="text-align:center; margin-top:20px;">
         <p style="font-size:18px; color:#414546; font-weight:500;">
-            Is 30 minutes of your time worth 
-            <span style="color:#57A3C4; font-weight:700;">${difference:,.0f}</span>?
+            Is <span style="color:#57A3C4; font-weight:700;">${difference:,.0f}</span> 
+            worth 30 minutes of your time?
         </p>
         <a href="https://calendly.com/your-placeholder-link" target="_blank"
            style="background-color:#57A3C4; color:white; padding:12px 24px;
