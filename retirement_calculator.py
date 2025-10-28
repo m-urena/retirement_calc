@@ -11,7 +11,7 @@ st.set_page_config(page_title="Bison Wealth | 401(k) Growth Simulator", page_ico
 st.markdown("""
     <style>
         body, .stApp {
-            background-color: #212121;
+            background-color: #000000;
             color: #E0E0E0;
             font-family: 'Segoe UI', sans-serif;
         }
