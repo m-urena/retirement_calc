@@ -81,39 +81,23 @@ with_help = growth_projection(balance, annual_contribs, help_rate)
 ages = list(range(age, target_age + 1))
 
 # --- Plot ---
-# --- Plot ---
+final_lonesome_val = baseline[-1]
+final_help_val = with_help[-1]
+
 fig = go.Figure()
 
 # On Your Lonesome line
 fig.add_trace(go.Scatter(
-    x=ages, y=baseline, mode="lines", name=f"On Your Lonesome ({non_help_rate*100:.1f}%)",
+    x=ages, y=baseline, mode="lines",
+    name=f"On Your Lonesome ({non_help_rate*100:.1f}% | ${final_lonesome_val/1_000_000:.2f}M)",
     line=dict(color="#7D7D7D", width=3)
 ))
 
 # With Help line
 fig.add_trace(go.Scatter(
-    x=ages, y=with_help, mode="lines", name=f"With Help ({help_rate*100:.1f}%)",
+    x=ages, y=with_help, mode="lines",
+    name=f"With Help ({help_rate*100:.1f}% | ${final_help_val/1_000_000:.2f}M)",
     line=dict(color="#57A3C4", width=4)
-))
-
-# --- End value markers and labels (placed at 65) ---
-fig.add_trace(go.Scatter(
-    x=[65], y=[baseline[-1]],
-    mode="markers+text",
-    text=[f"${baseline[-1]:,.0f}"],
-    textposition="top right",
-    textfont=dict(color="#7D7D7D", size=13),
-    marker=dict(color="#7D7D7D", size=6),
-    showlegend=False
-))
-fig.add_trace(go.Scatter(
-    x=[65], y=[with_help[-1]],
-    mode="markers+text",
-    text=[f"${with_help[-1]:,.0f}"],
-    textposition="top right",
-    textfont=dict(color="#57A3C4", size=16),
-    marker=dict(color="#57A3C4", size=6),
-    showlegend=False
 ))
 
 # --- Layout ---
@@ -122,7 +106,10 @@ fig.update_layout(
     title_font=dict(color="#414546", size=22),
     paper_bgcolor="white",
     plot_bgcolor="white",
-    xaxis=dict(title="Age", color="#414546", gridcolor="#E0E0E0", range=[age, 65]),
+    xaxis=dict(
+        title="Age", color="#414546", gridcolor="#E0E0E0",
+        range=[age, 65]  # stop exactly at 65
+    ),
     yaxis=dict(title="Portfolio Value ($)", color="#414546", gridcolor="#E0E0E0"),
     legend=dict(bgcolor="white", font=dict(color="#414546")),
     hovermode="x unified",
@@ -130,6 +117,7 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
 
 
 # --- Metrics + CTA ---
