@@ -53,11 +53,11 @@ ages = list(range(age, target_age + 1))
 # --- Plot ---
 fig = go.Figure()
 fig.add_trace(go.Scatter(
-    x=ages, y=baseline, mode="lines", name="On Your Lonesome (8%)",
+    x=ages, y=baseline, mode="lines", name="On Your Lonesome",
     line=dict(color="#7D7D7D", width=3)
 ))
 fig.add_trace(go.Scatter(
-    x=ages, y=with_help, mode="lines", name="With Help (14.79%)",
+    x=ages, y=with_help, mode="lines", name="With Help",
     line=dict(color="#57A3C4", width=3)
 ))
 fig.update_layout(
