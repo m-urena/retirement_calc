@@ -107,7 +107,7 @@ fig.add_trace(go.Scatter(
 fig.add_trace(go.Scatter(
     x=ages, y=with_help, mode="lines",
     name=f"With Help ({help_rate*100:.1f}%)",
-    line=dict(color="#57A3C4", width=4)
+    line=dict(color="#57A3C4", width=6)
 ))
 
 # --- End value labels (just past 65) ---
