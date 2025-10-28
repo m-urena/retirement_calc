@@ -89,16 +89,33 @@ fig = go.Figure()
 # On Your Lonesome line
 fig.add_trace(go.Scatter(
     x=ages, y=baseline, mode="lines",
-    name=f"On Your Lonesome ({non_help_rate*100:.1f}% | ${final_lonesome_val/1_000_000:.2f}M)",
+    name=f"On Your Lonesome ({non_help_rate*100:.1f}%)",
     line=dict(color="#7D7D7D", width=3)
 ))
 
 # With Help line
 fig.add_trace(go.Scatter(
     x=ages, y=with_help, mode="lines",
-    name=f"With Help ({help_rate*100:.1f}% | ${final_help_val/1_000_000:.2f}M)",
+    name=f"With Help ({help_rate*100:.1f}%)",
     line=dict(color="#57A3C4", width=4)
 ))
+
+# --- End value labels (just past age 65) ---
+fig.add_annotation(
+    x=65.3, y=final_lonesome_val,
+    text=f"${final_lonesome_val:,.0f}",
+    showarrow=False,
+    font=dict(color="#7D7D7D", size=13, family="Segoe UI"),
+    xanchor="left", yanchor="middle"
+)
+
+fig.add_annotation(
+    x=65.3, y=final_help_val,
+    text=f"${final_help_val:,.0f}",
+    showarrow=False,
+    font=dict(color="#57A3C4", size=16, family="Segoe UI"),
+    xanchor="left", yanchor="middle"
+)
 
 # --- Layout ---
 fig.update_layout(
@@ -107,8 +124,10 @@ fig.update_layout(
     paper_bgcolor="white",
     plot_bgcolor="white",
     xaxis=dict(
-        title="Age", color="#414546", gridcolor="#E0E0E0",
-        range=[age, 65]  # stop exactly at 65
+        title="Age",
+        color="#414546",
+        gridcolor="#E0E0E0",
+        range=[age, 67]  # expand so labels fit
     ),
     yaxis=dict(title="Portfolio Value ($)", color="#414546", gridcolor="#E0E0E0"),
     legend=dict(bgcolor="white", font=dict(color="#414546")),
@@ -117,8 +136,6 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
-
-
 
 # --- Metrics + CTA ---
 st.markdown("---")
