@@ -77,7 +77,7 @@ st.markdown("---")
 final_lonesome = baseline[-1]
 final_help = with_help[-1]
 c1, c2 = st.columns(2)
-c1.metric("Projected Balance (8%)", f"${final_lonesome:,.0f}")
-c2.metric("Projected Balance (14.79%)", f"${final_help:,.0f}")
+c1.metric("On Your Lonesome", f"${final_lonesome:,.0f}")
+c2.metric("With Help", f"${final_help:,.0f}")
 
 st.caption("For illustrative purposes only. Assumes annual compounding and consistent contributions.")
