@@ -86,21 +86,19 @@ final_help_val = with_help[-1]
 
 fig = go.Figure()
 
-# On Your Lonesome line
+# Lines
 fig.add_trace(go.Scatter(
     x=ages, y=baseline, mode="lines",
     name=f"On Your Lonesome ({non_help_rate*100:.1f}%)",
     line=dict(color="#7D7D7D", width=3)
 ))
-
-# With Help line
 fig.add_trace(go.Scatter(
     x=ages, y=with_help, mode="lines",
     name=f"With Help ({help_rate*100:.1f}%)",
     line=dict(color="#57A3C4", width=4)
 ))
 
-# --- End value labels (slightly beyond 65) ---
+# End labels
 fig.add_annotation(
     x=65.3, y=final_lonesome_val,
     text=f"${final_lonesome_val:,.0f}",
@@ -108,7 +106,6 @@ fig.add_annotation(
     font=dict(color="#7D7D7D", size=13, family="Segoe UI"),
     xanchor="left", yanchor="middle"
 )
-
 fig.add_annotation(
     x=65.3, y=final_help_val,
     text=f"${final_help_val:,.0f}",
@@ -117,27 +114,39 @@ fig.add_annotation(
     xanchor="left", yanchor="middle"
 )
 
-# --- Layout ---
+# Layout
 fig.update_layout(
     title=f"Estimated 401(k) Growth for {name}" if name else "Estimated 401(k) Growth",
     title_font=dict(color="#414546", size=22),
     paper_bgcolor="white",
     plot_bgcolor="white",
-    xaxis=dict(
-        title="Age",
-        color="#414546",
-        gridcolor="#E0E0E0",
-        range=[age, 67]  # expand so labels fit
-    ),
+    xaxis=dict(title="Age", color="#414546", gridcolor="#E0E0E0", range=[age, 67]),
     yaxis=dict(title="Portfolio Value ($)", color="#414546", gridcolor="#E0E0E0"),
     legend=dict(bgcolor="white", font=dict(color="#414546")),
     hovermode="x unified",
-    margin=dict(l=50, r=140, t=60, b=60),
-    width=1000,  # makes chart wider
-    height=500   # keeps vertical balance
+    margin=dict(l=50, r=200, t=60, b=60),
+    autosize=False,
+    width=1200,
+    height=450
 )
 
-st.plotly_chart(fig, use_container_width=False)
+# --- Make chart full-width ---
+st.markdown(
+    """
+    <style>
+    .fullwidth-chart {
+        width: 100%;
+        margin-left: -5rem;
+        margin-right: -5rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+st.markdown('<div class="fullwidth-chart">', unsafe_allow_html=True)
+st.plotly_chart(fig, use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
 
 # --- Metrics + CTA ---
 st.markdown("---")
