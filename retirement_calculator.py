@@ -114,5 +114,3 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.write("")
-st.caption("For illustrative purposes only. Assumes annual compounding and consistent contributions.")
