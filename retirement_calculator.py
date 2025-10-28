@@ -140,7 +140,7 @@ st.markdown(
             Is <span style="color:#57A3C4; font-weight:700;">${difference:,.0f}</span>
             worth 30 minutes of your time?
         </p>
-        <a href="https://calendly.com/your-placeholder-link" target="_blank"
+        <a href="https://calendly.com/placeholder-link" target="_blank"
            style="background-color:#57A3C4; color:white; padding:12px 24px;
                   text-decoration:none; border-radius:8px; font-weight:600;">
            Schedule a Conversation
