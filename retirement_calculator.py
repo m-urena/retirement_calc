@@ -1,120 +1,105 @@
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+from datetime import date
 
-st.set_page_config(page_title="Retirement Planner", page_icon="💼", layout="centered")
-st.title("💼 Tax-Aware Retirement Planner")
+# --- Page setup ---
+st.set_page_config(page_title="Bison Wealth | 401(k) Growth Simulator", page_icon="💼", layout="centered")
 
-colA, colB = st.columns(2)
+# --- Styling ---
+st.markdown("""
+    <style>
+        body, .stApp {
+            background-color: #212121;
+            color: #E0E0E0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        h1, h2, h3 {
+            color: #AFD4E3;
+            font-weight: 600;
+        }
+        .stMetric {
+            background-color: #2C2C2C;
+            border: 1px solid #414546;
+            border-radius: 10px;
+            padding: 8px;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# === Inputs ===
-acct_type = colA.selectbox("Account Type", ["401(k)", "Traditional IRA", "Roth IRA", "Taxable", "403(b)", "SEP IRA", "Solo 401(k)"])
-age = colA.number_input("Current Age", 18, 80, 28)
-retire_age = colA.number_input("Planned Retirement Age", age + 1, 90, 65)
-income = colA.number_input("Current Annual Income ($)", 0.0, 1e7, 90000.0, step=1000.0, format="%.2f")
-pct_income_needed = colA.slider("Percent of Income Needed in Retirement", 30, 120, 80)
+# --- Header ---
+st.title("💼 Bison Wealth 401(k) Growth Simulator")
+st.markdown("Visualize how your 401(k) could grow **with and without Bison’s guidance**.")
 
-current_savings = colB.number_input("Current Savings ($)", 0.0, 1e8, 50000.0, step=1000.0, format="%.2f")
-monthly_contrib = colB.number_input("Monthly Contribution ($)", 0.0, 1e5, 1000.0, step=100.0, format="%.2f")
-exp_return_pre = colB.number_input("Expected Annual Return Before Retirement (%)", 0.0, 20.0, 7.0, step=0.1)
-exp_return_post = colB.number_input("Expected Annual Return After Retirement (%)", 0.0, 20.0, 4.0, step=0.1)
-inflation = colB.number_input("Expected Annual Inflation (%)", 0.0, 10.0, 2.5, step=0.1)
+# --- Client info ---
+st.subheader("Client Information")
+col1, col2 = st.columns(2)
+name = col1.text_input("Client Name")
+dob = col2.date_input("Date of Birth", min_value=date(1900, 1, 1), max_value=date.today())
 
-adjust_for_inflation = st.checkbox("Adjust retirement spending for inflation?", value=True)
-
-tax_rate_income = st.slider("Ordinary Income Tax Rate (%)", 0, 50, 25)
-tax_rate_capgains = st.slider("Capital Gains Tax Rate (%)", 0, 30, 15)
-
-# === Setup ===
-years_to_retire = retire_age - age
-r_pre = exp_return_pre / 100
-r_post = exp_return_post / 100
-i = inflation / 100
-tax_rate_income /= 100
-tax_rate_capgains /= 100
-
-# === Adjust accumulation by account type ===
-if acct_type in ["401(k)", "Traditional IRA", "SEP IRA", "403(b)"]:
-    eff_contrib = monthly_contrib
-    eff_r_pre = r_pre
-elif acct_type == "Roth IRA":
-    eff_contrib = monthly_contrib * (1 - tax_rate_income)
-    eff_r_pre = r_pre
-else:  # Taxable
-    eff_contrib = monthly_contrib * (1 - tax_rate_income)
-    eff_r_pre = r_pre * (1 - tax_rate_capgains)
-
-rm_eff = eff_r_pre / 12
-n_months = years_to_retire * 12
-
-fv_contribs = eff_contrib * (((1 + rm_eff) ** n_months - 1) / rm_eff)
-fv_savings = current_savings * (1 + rm_eff) ** n_months
-balance_at_retirement = fv_contribs + fv_savings
-
-# === Convert to after-tax equivalent ===
-if acct_type in ["401(k)", "Traditional IRA", "SEP IRA", "403(b)"]:
-    after_tax_balance = balance_at_retirement * (1 - tax_rate_income)
-elif acct_type == "Taxable":
-    taxable_fraction = 0.8
-    after_tax_balance = balance_at_retirement * (1 - taxable_fraction * tax_rate_capgains)
+# --- Calculate current age ---
+if dob:
+    today = date.today()
+    age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 else:
-    after_tax_balance = balance_at_retirement
+    age = 0
 
-# === Spending target ===
-if adjust_for_inflation:
-    spend_at_retirement = income * (pct_income_needed / 100) * ((1 + i) ** years_to_retire)
-else:
-    spend_at_retirement = income * (pct_income_needed / 100)
+# --- Inputs ---
+st.subheader("401(k) Details")
+colA, colB, colC = st.columns(3)
+balance = colA.number_input("Current 401(k) Balance ($)", min_value=0.0, value=100000.0, step=1000.0, format="%.2f")
+annual_contrib = colB.number_input("Your Annual Contribution ($)", min_value=0.0, value=10000.0, step=500.0, format="%.2f")
+employer_contrib = colC.number_input("Employer Annual Contribution ($)", min_value=0.0, value=5000.0, step=500.0, format="%.2f")
 
-# === Post-retirement drawdown ===
-horizon_max_age = 110
-years_post = horizon_max_age - retire_age
-ages, balances, spends = [], [], []
-b = balance_at_retirement
-s = spend_at_retirement
+# --- Constants ---
+target_age = 65
+years = max(0, target_age - age)
+growth_rate_baseline = 0.08
+growth_rate_help = 0.1479
 
-for y in range(years_post + 1):
-    ages.append(retire_age + y)
-    balances.append(max(b, 0))
-    spends.append(s)
+# --- Growth calculation ---
+def future_value(balance, contrib, rate, years):
+    total = balance
+    values = [balance]
+    for _ in range(years):
+        total = total * (1 + rate) + contrib
+        values.append(total)
+    return values
 
-    if acct_type in ["401(k)", "Traditional IRA", "SEP IRA", "403(b)"]:
-        withdrawal = s / (1 - tax_rate_income)
-    elif acct_type == "Roth IRA":
-        withdrawal = s
-    else:
-        withdrawal = s / (1 - tax_rate_capgains)
+total_contrib = annual_contrib + employer_contrib
+baseline = future_value(balance, total_contrib, growth_rate_baseline, years)
+with_help = future_value(balance, total_contrib, growth_rate_help, years)
+ages = list(range(age, target_age + 1))
 
-    if b <= 0:
-        break
-    b = b * (1 + r_post) - withdrawal
-    s = s * (1 + i)
-
-df_growth_years = list(range(age, retire_age + 1))
-growth_balances = []
-for yr in df_growth_years:
-    m = (yr - age) * 12
-    fv_c = eff_contrib * (((1 + rm_eff) ** m - 1) / rm_eff) if m > 0 else 0
-    fv_s = current_savings * (1 + rm_eff) ** m
-    growth_balances.append(fv_c + fv_s)
-
-df_pre = pd.DataFrame({"Age": df_growth_years, "Balance": growth_balances})
-df_post = pd.DataFrame({"Age": ages, "Balance": balances})
-runout_age = int(df_post["Age"].iloc[-1]) if df_post["Balance"].iloc[-1] <= 0 else None
-
-# === Output ===
-st.subheader("Results")
-c1, c2, c3 = st.columns(3)
-c1.metric("Balance at Retirement (Pre-Tax)", f"${balance_at_retirement:,.0f}")
-c2.metric("After-Tax Equivalent", f"${after_tax_balance:,.0f}")
-c3.metric("Money Runs Out", "Does not run out" if runout_age is None else f"Age {runout_age}")
-
-st.caption(f"Pre-ret return: {exp_return_pre:.1f}% | Post-ret: {exp_return_post:.1f}% | Inflation: {inflation:.1f}%")
-
+# --- Plot ---
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=df_pre["Age"], y=df_pre["Balance"], mode="lines", name="Pre-retirement"))
-fig.add_trace(go.Scatter(x=df_post["Age"], y=df_post["Balance"], mode="lines", name="Post-retirement"))
-fig.update_layout(title=f"Portfolio Balance Over Time — {acct_type}",
-                  xaxis_title="Age", yaxis_title="Balance ($)", hovermode="x unified")
+fig.add_trace(go.Scatter(
+    x=ages, y=baseline, mode="lines", name="On Your Lonesome (8%)",
+    line=dict(color="#AFD4E3", width=3)
+))
+fig.add_trace(go.Scatter(
+    x=ages, y=with_help, mode="lines", name="With Help (14.79%)",
+    line=dict(color="#57A3C4", width=3)
+))
+fig.update_layout(
+    title=f"Estimated 401(k) Growth for {name}" if name else "Estimated 401(k) Growth",
+    title_font=dict(color="#AFD4E3", size=22),
+    paper_bgcolor="#212121",
+    plot_bgcolor="#212121",
+    xaxis=dict(title="Age", color="#E0E0E0", gridcolor="#414546"),
+    yaxis=dict(title="Portfolio Value ($)", color="#E0E0E0", gridcolor="#414546"),
+    legend=dict(bgcolor="#212121", font=dict(color="#E0E0E0")),
+    hovermode="x unified"
+)
 st.plotly_chart(fig, use_container_width=True)
+
+# --- Final numbers ---
+st.markdown("---")
+final_lonesome = baseline[-1]
+final_help = with_help[-1]
+c1, c2 = st.columns(2)
+c1.metric("Projected Balance (8%)", f"${final_lonesome:,.0f}")
+c2.metric("Projected Balance (14.79%)", f"${final_help:,.0f}")
+
+st.caption("For illustrative purposes only. Assumes annual compounding and consistent contributions.")
