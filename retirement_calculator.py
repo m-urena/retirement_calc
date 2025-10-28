@@ -76,8 +76,43 @@ st.plotly_chart(fig, use_container_width=True)
 st.markdown("---")
 final_lonesome = baseline[-1]
 final_help = with_help[-1]
+difference = final_help - final_lonesome
+
 c1, c2 = st.columns(2)
 c1.metric("On Your Lonesome", f"${final_lonesome:,.0f}")
-c2.metric("With Help", f"${final_help:,.0f}")
+
+with c2:
+    st.markdown(
+        f"""
+        <div style="text-align:center; background-color:#E6F4F9;
+                    border-radius:12px; padding:10px; border:1px solid #57A3C4;">
+            <p style="color:#414546; font-weight:600; margin:0;">With Bison by Your Side</p>
+            <p style="color:#57A3C4; font-size:24px; font-weight:700; margin:0;">
+                ${final_help:,.0f}
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+st.markdown("---")
+
+# Call to action
+st.markdown(
+    f"""
+    <div style="text-align:center; margin-top:20px;">
+        <p style="font-size:18px; color:#414546; font-weight:500;">
+            Is 30 minutes of your time worth 
+            <span style="color:#57A3C4; font-weight:700;">${difference:,.0f}</span>?
+        </p>
+        <a href="https://calendly.com/your-placeholder-link" target="_blank"
+           style="background-color:#57A3C4; color:white; padding:12px 24px;
+                  text-decoration:none; border-radius:8px; font-weight:600;">
+           Schedule a Conversation
+        </a>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 st.caption("For illustrative purposes only. Assumes annual compounding and consistent contributions.")
