@@ -104,7 +104,7 @@ if balance and salary:
         line=dict(color="#57A3C4", width=6)
     ))
     fig.add_annotation(
-        x=ages[-1] - 0.6,
+        x=ages[-1] - 0.3,
         y=baseline[-1],
         text=f"${baseline[-1]:,.0f}",
         showarrow=False,
@@ -113,7 +113,7 @@ if balance and salary:
         yanchor="middle"
     )
     fig.add_annotation(
-        x=ages[-1] - 0.6,
+        x=ages[-1] - 0.3,
         y=with_help[-1],
         text=f"${with_help[-1]:,.0f}",
         showarrow=False,
