@@ -83,7 +83,7 @@ if balance and salary:
     def growth_projection(start_balance, contribs, rate):
         total = start_balance
         values = [start_balance]
-        for c in contribs:
+        for c in contribs[:-1]:  # stop one year earlier so final = age 65, not 66
             total = total * (1 + rate) + c
             values.append(total)
         return values
