@@ -103,9 +103,12 @@ if balance and salary:
         name=f"With Help ({help_rate*100:.1f}%)",
         line=dict(color="#57A3C4", width=6)
     ))
+    offset_x = 0.8
+    offset_y = (max(with_help[-1], baseline[-1]) - min(with_help[-1], baseline[-1])) * 0.03
+
     fig.add_annotation(
-        x=ages[-1],
-        y=baseline[-1],
+        x=ages[-1] + offset_x,
+        y=baseline[-1] + offset_y,
         text=f"${baseline[-1]:,.0f}",
         showarrow=False,
         font=dict(color="#7D7D7D", size=13, family="Segoe UI"),
@@ -113,8 +116,8 @@ if balance and salary:
         yanchor="middle"
     )
     fig.add_annotation(
-        x=ages[-1],
-        y=with_help[-1],
+        x=ages[-1] + offset_x,
+        y=with_help[-1] + offset_y,
         text=f"${with_help[-1]:,.0f}",
         showarrow=False,
         font=dict(color="#57A3C4", size=16, family="Segoe UI"),
