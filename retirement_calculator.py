@@ -104,18 +104,22 @@ if balance and salary:
         line=dict(color="#57A3C4", width=6)
     ))
     fig.add_annotation(
-        x=65.3, y=final_lonesome_val,
-        text=f"${final_lonesome_val:,.0f}",
+        x=ages[-1],
+        y=baseline[-1],
+        text=f"${baseline[-1]:,.0f}",
         showarrow=False,
         font=dict(color="#7D7D7D", size=13, family="Segoe UI"),
-        xanchor="left", yanchor="middle"
+        xanchor="left",
+        yanchor="middle"
     )
     fig.add_annotation(
-        x=65.3, y=final_help_val,
-        text=f"${final_help_val:,.0f}",
+        x=ages[-1],
+        y=with_help[-1],
+        text=f"${with_help[-1]:,.0f}",
         showarrow=False,
         font=dict(color="#57A3C4", size=16, family="Segoe UI"),
-        xanchor="left", yanchor="middle"
+        xanchor="left",
+        yanchor="middle"
     )
     fig.update_layout(
         title=f"Estimated 401(k) Growth for {name}" if name else "Estimated 401(k) Growth",
