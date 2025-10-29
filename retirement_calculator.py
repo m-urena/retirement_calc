@@ -4,11 +4,10 @@ import numpy as np
 import plotly.graph_objects as go
 from datetime import date
 
-# --- Streamlit Page Config ---
 st.set_page_config(
     page_title="Bison Wealth | 401(k) Growth Simulator",
     page_icon="💼",
-    layout="wide"  # enables wider overall layout
+    layout="wide"
 )
 st.markdown(
     """
@@ -27,26 +26,22 @@ st.markdown(
 st.title("💼 Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
 
-# --- Client Info ---
 st.subheader("Client Information")
 col1, col2 = st.columns(2)
 name = col1.text_input("Client Name")
 dob = col2.date_input("Date of Birth", min_value=date(1900, 1, 1), max_value=date.today())
 
-# --- Calculate Age ---
 if dob:
     today = date.today()
     age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 else:
     age = 0
 
-# --- 401(k) Inputs ---
 st.subheader("401(k) Details")
 colA, colB = st.columns(2)
 balance = colA.number_input("Current 401(k) Balance ($)", min_value=0.0, value=100000.0, step=1000.0, format="%.2f")
 salary = colB.number_input("Current Annual Salary ($)", min_value=0.0, value=90000.0, step=1000.0, format="%.2f")
 
-# --- Assumptions ---
 target_age = 65
 years = max(0, target_age - age)
 salary_growth_rate = 0.03
@@ -54,7 +49,6 @@ employee_contrib = 0.078
 employer_contrib = 0.046
 contribution_rate = employee_contrib + employer_contrib
 
-# --- Age-banded Return Estimates ---
 AGE_BANDS = [
     (25, 30, 0.078, 0.112),
     (30, 35, 0.082, 0.119),
@@ -76,7 +70,6 @@ def rates_for_age(a: int):
 
 non_help_rate, help_rate = rates_for_age(age)
 
-# --- Salary Growth and Contributions ---
 salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years + 1)]
 annual_contribs = [s * contribution_rate for s in salaries]
 
@@ -110,7 +103,6 @@ fig.add_trace(go.Scatter(
     line=dict(color="#57A3C4", width=6)
 ))
 
-# --- End value labels (just past 65) ---
 fig.add_annotation(
     x=65.3, y=final_lonesome_val,
     text=f"${final_lonesome_val:,.0f}",
@@ -139,12 +131,11 @@ fig.update_layout(
     height=450
 )
 
-# --- Display Plot in Wider Container ---
+
 wide_col = st.container()
 with wide_col:
     st.plotly_chart(fig, use_container_width=True)
 
-# --- Summary ---
 st.markdown("---")
 final_lonesome = baseline[-1]
 final_help = with_help[-1]
