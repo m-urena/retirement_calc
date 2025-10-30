@@ -20,6 +20,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+logo = Image.open("Bison Wealth Logo.png")
+st.image(logo, width=220)
+st.title("Bison Wealth 401(k) Growth Simulator")
+st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
+
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
 
