@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from datetime import date
+from PIL import Image
+import os
 
 st.set_page_config(page_title="Bison Wealth | 401(k) Growth Simulator", layout="wide")
 
