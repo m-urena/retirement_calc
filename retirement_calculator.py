@@ -6,7 +6,7 @@ from datetime import date
 from PIL import Image
 import os
 
-st.set_page_config(page_title="Bison Wealth | 401(k) Growth Simulator", page_icon="💼", layout="wide")
+st.set_page_config(page_title="Bison Wealth | 401(k) Growth Simulator", page_icon="🦬", layout="wide")
 
 st.markdown(
     """
@@ -26,8 +26,6 @@ st.markdown(
 logo_path = "Bison Wealth Logo.png"
 if os.path.exists(logo_path):
     st.image(logo_path, width=220)
-else:
-    st.markdown("### 🦬 Bison Wealth")
 
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
@@ -102,7 +100,7 @@ if balance and salary:
         line=dict(color="#7D7D7D", width=3)))
     fig.add_trace(go.Scatter(x=ages, y=with_help, mode="lines",
         name=f"With Help ({help_rate*100:.1f}%)",
-        line=dict(color="#57A3C4", width=6)))
+        line=dict(color="#25385A", width=6)))
 
     fig.add_annotation(
         x=ages[-1] - 0.6, y=baseline[-1],
@@ -115,7 +113,7 @@ if balance and salary:
         x=ages[-1] - 0.6, y=with_help[-1],
         text=f"${with_help[-1]:,.0f}",
         showarrow=False,
-        font=dict(color="#57A3C4", size=16, family="Segoe UI"),
+        font=dict(color="#25385A", size=16, family="Segoe UI"),
         xanchor="right", yanchor="middle"
     )
 
@@ -140,10 +138,10 @@ if balance and salary:
     with c2:
         st.markdown(
             f"""
-            <div style="text-align:center; background-color:#E6F4F9;
-                        border-radius:12px; padding:10px; border:1px solid #57A3C4;">
+            <div style="text-align:center; background-color:#F3F4F6;
+                        border-radius:12px; padding:10px; border:1px solid #25385A;">
                 <p style="color:#414546; font-weight:600; margin:0;">With Bison by Your Side</p>
-                <p style="color:#57A3C4; font-size:24px; font-weight:700; margin:0;">
+                <p style="color:#25385A; font-size:24px; font-weight:700; margin:0;">
                     ${final_help_val:,.0f}
                 </p>
             </div>
@@ -156,11 +154,11 @@ if balance and salary:
         f"""
         <div style="text-align:center; margin-top:20px; margin-bottom:50px;">
             <p style="font-size:18px; color:#414546; font-weight:500;">
-                Is <span style="color:#57A3C4; font-weight:700;">${difference:,.0f}</span>
+                Is <span style="color:#25385A; font-weight:700;">${difference:,.0f}</span>
                 worth 30 minutes of your time?
             </p>
-            <a href="https://calendly.com/your-placeholder-link" target="_blank"
-               style="background-color:#57A3C4; color:white; padding:12px 24px;
+            <a href="https://calendly.com/placeholder-link" target="_blank"
+               style="background-color:#25385A; color:white; padding:12px 24px;
                       text-decoration:none; border-radius:8px; font-weight:600;">
                Schedule a Conversation
             </a>
