@@ -4,7 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 from datetime import date
 
-st.set_page_config(page_title="Bison Wealth | 401(k) Growth Simulator", page_icon="💼", layout="wide")
+st.set_page_config(page_title="Bison Wealth | 401(k) Growth Simulator", layout="wide")
 
 st.markdown(
     """
