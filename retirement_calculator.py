@@ -65,15 +65,17 @@ if balance and salary:
         (61, 120, 0.046, 0.070),
     ]
 
-    def rates_for_age(a: int):
-        if a < 25:
-            return AGE_BANDS[0][2], AGE_BANDS[0][3]
-        for lo, hi, non_help, help_rate in AGE_BANDS:
-            if lo <= a <= hi:
-                return non_help, help_rate
-        return AGE_BANDS[-1][2], AGE_BANDS[-1][3]
+    #def rates_for_age(a: int):
+        #if a < 25:
+        #    return AGE_BANDS[0][2], AGE_BANDS[0][3]
+        #for lo, hi, non_help, help_rate in AGE_BANDS:
+         #   if lo <= a <= hi:
+         #       return non_help, help_rate
+        #return AGE_BANDS[-1][2], AGE_BANDS[-1][3]
 
-    non_help_rate, help_rate = rates_for_age(age)
+    #non_help_rate, help_rate = rates_for_age(age)
+    non_help_rate=0.0863
+    help_rate = non_help_rate + 0.0332
     salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years + 1)]
     annual_contribs = [s * contribution_rate for s in salaries]
 
