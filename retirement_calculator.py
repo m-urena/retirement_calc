@@ -171,7 +171,7 @@ if balance and salary:
 
     st.caption("""
     For illustrative purposes only. Assumes 3% annual salary growth and 12.4% of salary contributed annually
-    (7.8% employee, 4.6% employer). Compounded monthly with age-adjusted annual returns.
+    (7.8% employee, 4.6% employer). Performance without help is the 5yr annualized return of the S&P Target Date 2035 Index. With help is bumped up by 3.32% because of the Hewitt Study
     """)
 else:
     st.info("Please enter your current 401(k) balance and salary to generate your projection.")
