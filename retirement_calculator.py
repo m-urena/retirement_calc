@@ -35,7 +35,7 @@ st.write("Visualize how your 401(k) could grow **with and without Bison’s guid
 # --------------------------------------------------
 st.subheader("Client Information")
 age = st.number_input("Your Age", min_value=18, max_value=120, value=35, step=1)
-
+salary_str = colB.text_input("Current Annual Salary ($)", value="100,000")
 # --------------------------------------------------
 # 401(k) INPUTS — comma-friendly
 # --------------------------------------------------
@@ -43,7 +43,7 @@ st.subheader("401(k) Details")
 colA, colB = st.columns(2)
 
 balance_str = colA.text_input("Current 401(k) Balance ($)", value="200,000")
-salary_str = colB.text_input("Current Annual Salary ($)", value="100,000")
+
 
 def parse_number(x):
     try:
