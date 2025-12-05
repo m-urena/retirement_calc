@@ -31,20 +31,21 @@ st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
 
 # --------------------------------------------------
-# AGE INPUT ONLY
+# CLIENT INFO — AGE + SALARY
 # --------------------------------------------------
 st.subheader("Client Information")
-age = st.number_input("Your Age", min_value=18, max_value=120, value=35, step=1)
-salary_str = colB.text_input("Current Annual Salary ($)", value="100,000")
+col1, col2 = st.columns(2)
+
+age = col1.number_input("Your Age", min_value=18, max_value=120, value=35, step=1)
+salary_str = col2.text_input("Current Annual Salary ($)", value="100,000")
+
 # --------------------------------------------------
 # 401(k) INPUTS — comma-friendly
 # --------------------------------------------------
 st.subheader("401(k) Details")
-colA, colB = st.columns(2)
+balance_str = st.text_input("Current 401(k) Balance ($)", value="200,000")
 
-balance_str = colA.text_input("Current 401(k) Balance ($)", value="200,000")
-
-
+# Parse numbers
 def parse_number(x):
     try:
         return float(x.replace(",", "").strip())
@@ -54,6 +55,9 @@ def parse_number(x):
 balance = parse_number(balance_str)
 salary = parse_number(salary_str)
 
+# --------------------------------------------------
+# MAIN LOGIC
+# --------------------------------------------------
 if balance and salary:
 
     target_age = 65
@@ -71,7 +75,7 @@ if balance and salary:
     salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years + 1)]
     annual_contribs = [s * contribution_rate for s in salaries]
 
-    # MONTHLY COMPOUNDING
+    # MONTHLY CONTRIBUTION + COMPOUNDING
     def growth_projection_monthly(start_balance, annual_contribs, annual_rate):
         total = start_balance
         values = [start_balance]
@@ -95,12 +99,15 @@ if balance and salary:
     # --------------------------------------------------
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=ages, y=baseline, mode="lines",
+        x=ages, y=baseline,
+        mode="lines",
         name=f"On Your Lonesome ({non_help_rate*100:.1f}%)",
         line=dict(color="#7D7D7D", width=3)
     ))
+
     fig.add_trace(go.Scatter(
-        x=ages, y=with_help, mode="lines",
+        x=ages, y=with_help,
+        mode="lines",
         name=f"With Bison by Your Side ({help_rate*100:.1f}%)",
         line=dict(color="#25385A", width=6)
     ))
@@ -113,6 +120,7 @@ if balance and salary:
         font=dict(color="#7D7D7D", size=13),
         xanchor="right", yanchor="middle"
     )
+
     fig.add_annotation(
         x=ages[-1] - 0.6, y=with_help[-1],
         text=f"${with_help[-1]:,.0f}",
@@ -121,7 +129,6 @@ if balance and salary:
         xanchor="right", yanchor="middle"
     )
 
-    # Static title
     fig.update_layout(
         title="Estimated 401(k) Growth",
         title_font=dict(color="#414546", size=22),
@@ -138,9 +145,7 @@ if balance and salary:
     st.plotly_chart(fig, use_container_width=True)
     st.markdown("---")
 
-    # --------------------------------------------------
     # METRICS
-    # --------------------------------------------------
     difference = final_help_val - final_lonesome_val
     c1, c2 = st.columns(2)
 
@@ -162,9 +167,7 @@ if balance and salary:
 
     st.markdown("---")
 
-    # --------------------------------------------------
-    # CTA
-    # --------------------------------------------------
+    # CTA MESSAGE
     st.markdown(
         f"""
         <div style="text-align:center; margin-top:20px; margin-bottom:50px;">
@@ -182,16 +185,10 @@ if balance and salary:
         unsafe_allow_html=True
     )
 
-    # --------------------------------------------------
     # DISCLOSURE
-    # --------------------------------------------------
     st.caption("""
 For illustrative purposes only. Assumes 3% annual salary growth and 12.4% of salary contributed annually
 (7.8% employee, 4.6% employer). Compounded monthly.
 
 Performance without help is the 5yr annualized return of the S&P Target Date 2035 Index as of 12/04/2025.  
-With help is bumped up by 3.32% because of the Hewitt Study.
-""")
-
-else:
-    st.info("Please enter your current 401(k) balance and salary to generate your projection.")
+With help is bumped up by 3.32% because of the Hewitt
