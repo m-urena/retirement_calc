@@ -31,22 +31,19 @@ st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
 
 # --------------------------------------------------
-# NAME + AGE INPUTS (RESTORED)
+# AGE INPUT ONLY
 # --------------------------------------------------
 st.subheader("Client Information")
-col1, col2 = st.columns(2)
-
-name = col1.text_input("Client Name", value="")
-age = col2.number_input("Your Age", min_value=18, max_value=120, value=35, step=1)
+age = st.number_input("Your Age", min_value=18, max_value=120, value=35, step=1)
 
 # --------------------------------------------------
-# 401(k) INPUTS — Now with comma-friendly typing
+# 401(k) INPUTS — comma-friendly
 # --------------------------------------------------
 st.subheader("401(k) Details")
 colA, colB = st.columns(2)
 
-balance_str = colA.text_input("Current 401(k) Balance ($)", value="200,000", placeholder="Enter your balance")
-salary_str = colB.text_input("Current Annual Salary ($)", value="100,000", placeholder="Enter your salary")
+balance_str = colA.text_input("Current 401(k) Balance ($)", value="200,000")
+salary_str = colB.text_input("Current Annual Salary ($)", value="100,000")
 
 def parse_number(x):
     try:
@@ -58,6 +55,7 @@ balance = parse_number(balance_str)
 salary = parse_number(salary_str)
 
 if balance and salary:
+
     target_age = 65
     years = max(0, target_age - age)
 
@@ -66,18 +64,14 @@ if balance and salary:
     employer_contrib = 0.046
     contribution_rate = employee_contrib + employer_contrib
 
-    # --------------------------------------------------
-    # NEW STATIC RETURN ASSUMPTIONS (NO AGE BANDS)
-    # --------------------------------------------------
+    # STATIC RETURN ASSUMPTIONS
     non_help_rate = 0.0847
-    help_rate = non_help_rate + 0.0332
+    help_rate = non_help_rate + 0.0332   # = 11.79%
 
     salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years + 1)]
     annual_contribs = [s * contribution_rate for s in salaries]
 
-    # --------------------------------------------------
-    # MONTHLY CONTRIBUTION + MONTHLY COMPOUNDING
-    # --------------------------------------------------
+    # MONTHLY COMPOUNDING
     def growth_projection_monthly(start_balance, annual_contribs, annual_rate):
         total = start_balance
         values = [start_balance]
@@ -127,8 +121,9 @@ if balance and salary:
         xanchor="right", yanchor="middle"
     )
 
+    # Static title
     fig.update_layout(
-        title=f"Estimated 401(k) Growth for {name}" if name else "Estimated 401(k) Growth",
+        title="Estimated 401(k) Growth",
         title_font=dict(color="#414546", size=22),
         paper_bgcolor="white",
         plot_bgcolor="white",
@@ -144,7 +139,7 @@ if balance and salary:
     st.markdown("---")
 
     # --------------------------------------------------
-    # METRICS + CALLOUT BOX
+    # METRICS
     # --------------------------------------------------
     difference = final_help_val - final_lonesome_val
     c1, c2 = st.columns(2)
@@ -168,7 +163,7 @@ if balance and salary:
     st.markdown("---")
 
     # --------------------------------------------------
-    # CTA MESSAGE
+    # CTA
     # --------------------------------------------------
     st.markdown(
         f"""
@@ -188,7 +183,7 @@ if balance and salary:
     )
 
     # --------------------------------------------------
-    # NEW REQUIRED DISCLOSURE
+    # DISCLOSURE
     # --------------------------------------------------
     st.caption("""
 For illustrative purposes only. Assumes 3% annual salary growth and 12.4% of salary contributed annually
