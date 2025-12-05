@@ -34,8 +34,9 @@ st.write("Visualize how your 401(k) could grow **with and without Bison’s guid
 # NEW: ASK FOR AGE DIRECTLY (DEFAULT = 35)
 # --------------------------------------------------
 st.subheader("Client Information")
-age = st.number_input("Your Age", min_value=18, max_value=120, value=35, step=1)
-
+col1, col2 = st.columns(2)
+name = col1.text_input("Client Name")
+age = col2.number_input("Your Age", min_value=18, max_value=120, value=35, step=1)
 # --------------------------------------------------
 # 401(k) Inputs With Defaults
 # --------------------------------------------------
