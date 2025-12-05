@@ -30,25 +30,46 @@ if os.path.exists(logo_path):
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
 
+# --------------------------------------------------
+# NEW: ASK FOR AGE DIRECTLY (DEFAULT = 35)
+# --------------------------------------------------
 st.subheader("Client Information")
-col1, col2 = st.columns(2)
-name = col1.text_input("Client Name")
-dob = col2.date_input("Date of Birth", min_value=date(1900, 1, 1), max_value=date.today())
+age = st.number_input("Your Age", min_value=18, max_value=120, value=35, step=1)
 
-if dob:
-    today = date.today()
-    age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-else:
-    age = 0
-
+# --------------------------------------------------
+# 401(k) Inputs With Defaults
+# --------------------------------------------------
 st.subheader("401(k) Details")
 colA, colB = st.columns(2)
-balance = colA.number_input("Current 401(k) Balance ($)", min_value=0.0, value=None, step=1000.0, format="%.2f", placeholder="Enter your balance")
-salary = colB.number_input("Current Annual Salary ($)", min_value=0.0, value=None, step=1000.0, format="%.2f", placeholder="Enter your salary")
 
+balance_str = colA.text_input(
+    "Current 401(k) Balance ($)",
+    value="200,000",
+    placeholder="Enter your balance"
+)
+
+salary_str = colB.text_input(
+    "Current Annual Salary ($)",
+    value="100,000",
+    placeholder="Enter your salary"
+)
+
+# Convert to numbers safely
+def parse_number(x):
+    try:
+        return float(x.replace(",", "").strip())
+    except:
+        return None
+
+balance = parse_number(balance_str)
+salary = parse_number(salary_str)
+
+# Proceed only if inputs provided
 if balance and salary:
+
     target_age = 65
     years = max(0, target_age - age)
+
     salary_growth_rate = 0.03
     employee_contrib = 0.078
     employer_contrib = 0.046
@@ -65,17 +86,16 @@ if balance and salary:
         (61, 120, 0.046, 0.070),
     ]
 
-    #def rates_for_age(a: int):
-        #if a < 25:
-        #    return AGE_BANDS[0][2], AGE_BANDS[0][3]
-        #for lo, hi, non_help, help_rate in AGE_BANDS:
-         #   if lo <= a <= hi:
-         #       return non_help, help_rate
-        #return AGE_BANDS[-1][2], AGE_BANDS[-1][3]
+    def rates_for_age(a: int):
+        if a < 25:
+            return AGE_BANDS[0][2], AGE_BANDS[0][3]
+        for lo, hi, non_help, help_rate in AGE_BANDS:
+            if lo <= a <= hi:
+                return non_help, help_rate
+        return AGE_BANDS[-1][2], AGE_BANDS[-1][3]
 
-    #non_help_rate, help_rate = rates_for_age(age)
-    non_help_rate=0.0863
-    help_rate = non_help_rate + 0.0332
+    non_help_rate, help_rate = rates_for_age(age)
+
     salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years + 1)]
     annual_contribs = [s * contribution_rate for s in salaries]
 
@@ -92,6 +112,7 @@ if balance and salary:
 
     baseline = growth_projection_monthly(balance, annual_contribs, non_help_rate)
     with_help = growth_projection_monthly(balance, annual_contribs, help_rate)
+
     ages = list(range(age, target_age + 1))
     final_lonesome_val = baseline[-1]
     final_help_val = with_help[-1]
@@ -108,14 +129,14 @@ if balance and salary:
         x=ages[-1] - 0.6, y=baseline[-1],
         text=f"${baseline[-1]:,.0f}",
         showarrow=False,
-        font=dict(color="#7D7D7D", size=13, family="Segoe UI"),
+        font=dict(color="#7D7D7D", size=13),
         xanchor="right", yanchor="middle"
     )
     fig.add_annotation(
         x=ages[-1] - 0.6, y=with_help[-1],
         text=f"${with_help[-1]:,.0f}",
         showarrow=False,
-        font=dict(color="#25385A", size=16, family="Segoe UI"),
+        font=dict(color="#25385A", size=16),
         xanchor="right", yanchor="middle"
     )
 
@@ -171,7 +192,7 @@ if balance and salary:
 
     st.caption("""
     For illustrative purposes only. Assumes 3% annual salary growth and 12.4% of salary contributed annually
-    (7.8% employee, 4.6% employer). Performance without help is the 5yr annualized return of the S&P Target Date 2035 Index. With help is bumped up by 3.32% because of the Hewitt Study
+    (7.8% employee, 4.6% employer). Compounded monthly with age-adjusted annual returns.
     """)
 else:
     st.info("Please enter your current 401(k) balance and salary to generate your projection.")
