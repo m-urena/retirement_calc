@@ -34,8 +34,6 @@ st.write("Visualize how your 401(k) could grow **with and without Bison’s guid
 # NEW: ASK FOR AGE DIRECTLY (DEFAULT = 35)
 # --------------------------------------------------
 st.subheader("Client Information")
-col1, col2 = st.columns(2)
-name = col1.text_input("Client Name")
 age = col2.number_input("Your Age", min_value=18, max_value=120, value=35, step=1)
 # --------------------------------------------------
 # 401(k) Inputs With Defaults
@@ -142,7 +140,7 @@ if balance and salary:
     )
 
     fig.update_layout(
-        title=f"Estimated 401(k) Growth for {name}" if name else "Estimated 401(k) Growth",
+        title="Estimated 401(k) Growth",
         title_font=dict(color="#414546", size=22),
         paper_bgcolor="white", plot_bgcolor="white",
         xaxis=dict(title="Age", color="#414546", gridcolor="#E0E0E0", range=[age, 67]),
