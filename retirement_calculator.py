@@ -6,24 +6,28 @@ from datetime import datetime
 from supabase import create_client, Client
 import os
 
-# -----------------------------
-# Streamlit Page Configuration
-# -----------------------------
-st.set_page_config(page_title="Bison Wealth 401(k) Growth Simulator",
-                   page_icon="🦬",
-                   layout="wide")
 
-# -----------------------------
+# --------------------------------------------------
+# Streamlit Page Config
+# --------------------------------------------------
+st.set_page_config(
+    page_title="Bison Wealth 401(k) Growth Simulator",
+    page_icon="🦬",
+    layout="wide"
+)
+
+
+# --------------------------------------------------
 # Supabase Setup
-# -----------------------------
+# --------------------------------------------------
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
-# -----------------------------
-# Logo (safe load)
-# -----------------------------
+# --------------------------------------------------
+# Logo
+# --------------------------------------------------
 logo_path = "Bison_Wealth_Logo.png"
 if os.path.exists(logo_path):
     st.image(logo_path, width=150)
@@ -33,9 +37,9 @@ st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
 
 
-# -----------------------------
-# Helper: clean numeric input
-# -----------------------------
+# --------------------------------------------------
+# Helper: parse numbers with commas
+# --------------------------------------------------
 def parse_number(x):
     try:
         return float(x.replace(",", "").strip())
@@ -43,106 +47,120 @@ def parse_number(x):
         return None
 
 
-# -----------------------------
-# Projection Calculation
-# -----------------------------
+# --------------------------------------------------
+# Projection Calculation Function
+# --------------------------------------------------
 def compute_projection(age, salary, balance):
-
-    if salary is None:
-        salary = 0
-    if balance is None:
-        balance = 0
 
     target_age = 65
     years = target_age - age
     num_points = years + 1
 
     salary_growth_rate = 0.03
-    employee = 0.078
-    employer = 0.046
-    contrib_rate = employee + employer
+    contribution_rate = 0.078 + 0.046  # employee + employer
 
-    without_help = 0.0847
-    with_help_rate = without_help + 0.0332
+    r_no_help = 0.0847
+    r_help = r_no_help + 0.0332
 
-    salaries = [salary * ((1 + salary_growth_rate)**yr) for yr in range(num_points)]
-    annual_contribs = [s * contrib_rate for s in salaries]
+    salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(num_points)]
+    annual_contribs = [s * contribution_rate for s in salaries]
 
     def project(start, contribs, rate):
         total = start
-        vals = [start]
-        monthly_rate = (1 + rate)**(1/12) - 1
+        out = [start]
+        monthly_rate = (1 + rate) ** (1/12) - 1
 
         for yearly in contribs:
             monthly_contrib = yearly / 12
             for _ in range(12):
                 total = total * (1 + monthly_rate) + monthly_contrib
-            vals.append(total)
+            out.append(total)
 
-        return vals[:num_points]
+        return out[:num_points]
 
-    baseline = project(balance, annual_contribs, without_help)
-    helpvals = project(balance, annual_contribs, with_help_rate)
+    baseline = project(balance, annual_contribs, r_no_help)
+    helpvals = project(balance, annual_contribs, r_help)
 
     ages = list(range(age, age + num_points))
 
-    df = pd.DataFrame({
+    return pd.DataFrame({
         "age": ages,
         "baseline": baseline,
         "with_help": helpvals
     })
 
-    return df
+
+# --------------------------------------------------
+# Initialize session_state for stored values
+# --------------------------------------------------
+if "age_used" not in st.session_state:
+    st.session_state.age_used = 42
+if "salary_used" not in st.session_state:
+    st.session_state.salary_used = 84000
+if "balance_used" not in st.session_state:
+    st.session_state.balance_used = 76500
 
 
-# -----------------------------
+# --------------------------------------------------
 # Inputs Section
-# -----------------------------
-col_left, col_right = st.columns([1, 2])
+# --------------------------------------------------
+left, right = st.columns([1, 2])
 
-with col_left:
+with left:
 
     st.subheader("Your Information")
 
-    age = st.number_input("Your Age", min_value=18, max_value=100, value=42, step=1)
+    age_input = st.number_input("Your Age", min_value=18, max_value=100, value=42)
     salary_str = st.text_input("Current Annual Salary ($)", value="84,000")
     balance_str = st.text_input("Current 401(k) Balance ($)", value="76,500")
     company = st.text_input("Company Name", placeholder="Where do you work?")
 
-    salary = parse_number(salary_str)
-    balance = parse_number(balance_str)
+    salary_input = parse_number(salary_str)
+    balance_input = parse_number(balance_str)
 
     calculate = st.button("Calculate", type="primary")
 
 
-# -----------------------------
-# Evaluate Projection (always show)
-# -----------------------------
-df = compute_projection(age, salary, balance)
+# --------------------------------------------------
+# When user clicks Calculate → freeze values
+# --------------------------------------------------
+if calculate and salary_input and balance_input:
 
+    st.session_state.age_used = age_input
+    st.session_state.salary_used = salary_input
+    st.session_state.balance_used = balance_input
 
-# -----------------------------
-# Save to Supabase on Calculate
-# -----------------------------
-if calculate and salary and balance:
     supabase.table("submissions").insert({
-        "age": age,
-        "salary": salary,
-        "balance": balance,
+        "age": age_input,
+        "salary": salary_input,
+        "balance": balance_input,
         "company": company if company.strip() else "Unknown",
         "created_at": datetime.utcnow().isoformat()
     }).execute()
+
     st.success("Saved to database!")
 
 
-# -----------------------------
-# Plotly Chart
-# -----------------------------
-with col_right:
+# --------------------------------------------------
+# Compute Projection ONLY from stored values
+# --------------------------------------------------
+df = compute_projection(
+    st.session_state.age_used,
+    st.session_state.salary_used,
+    st.session_state.balance_used
+)
+
+
+# --------------------------------------------------
+# Graph Section
+# --------------------------------------------------
+with right:
+
     st.subheader("Estimated 401(k) Growth")
 
     fig = go.Figure()
 
+    # Baseline Line
     fig.add_trace(go.Scatter(
         x=df["age"], y=df["baseline"],
         mode="lines",
@@ -151,6 +169,7 @@ with col_right:
         hovertemplate="Age %{x}<br>$%{y:,.0f}<extra></extra>"
     ))
 
+    # With Help Line
     fig.add_trace(go.Scatter(
         x=df["age"], y=df["with_help"],
         mode="lines",
@@ -159,10 +178,11 @@ with col_right:
         hovertemplate="Age %{x}<br>$%{y:,.0f}<extra></extra>"
     ))
 
-    # End label offsets
+    # Label Offsets
     offset_base = df["baseline"].iloc[-1] * 0.04
     offset_help = df["with_help"].iloc[-1] * 0.04
 
+    # Baseline Label
     fig.add_annotation(
         x=df["age"].iloc[-1] + 0.3,
         y=df["baseline"].iloc[-1] + offset_base,
@@ -171,6 +191,7 @@ with col_right:
         font=dict(color="#7D7D7D", size=14)
     )
 
+    # Help Label
     fig.add_annotation(
         x=df["age"].iloc[-1] + 0.3,
         y=df["with_help"].iloc[-1] + offset_help,
@@ -179,26 +200,28 @@ with col_right:
         font=dict(color="#25385A", size=17)
     )
 
+    # Layout
     fig.update_layout(
         height=450,
+        margin=dict(l=20, r=20, t=20, b=40),
         plot_bgcolor="white",
         paper_bgcolor="white",
-        margin=dict(l=20, r=20, t=20, b=40),
         xaxis=dict(title="Age", fixedrange=True, gridcolor="#E0E0E0"),
         yaxis=dict(title="Portfolio Value ($)", fixedrange=True, gridcolor="#E0E0E0"),
         hovermode="x unified"
     )
 
-    fig.update_layout(dragmode=False)
+    # Disable zoom/pan
     fig.update_xaxes(fixedrange=True)
     fig.update_yaxes(fixedrange=True)
+    fig.update_layout(dragmode=False)
 
     st.plotly_chart(fig, use_container_width=True)
 
 
-# -----------------------------
+# --------------------------------------------------
 # CTA Section
-# -----------------------------
+# --------------------------------------------------
 final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 
 st.markdown(
@@ -224,12 +247,12 @@ st.markdown(
 )
 
 
-# -----------------------------
+# --------------------------------------------------
 # Disclosure
-# -----------------------------
+# --------------------------------------------------
 st.markdown("<br><br>", unsafe_allow_html=True)
 st.caption("""
 For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contribution (7.8% employee, 4.6% employer).
-Performance without help is the 5-year annualized return of the S&P Target Date 2035 Index (as of 12/04/2025).
+Performance without help is the 5-year annualized return of the S&P Target Date 2035 Index.
 With help is increased by 3.32% based on the Hewitt Study.
 """)
