@@ -24,7 +24,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # -----------------------------
 # Header + Branding
 # -----------------------------
-logo_path = "Bison_Wealth_Logo.png"
+logo_path = "bison_logo.png"
 st.image(logo_path, width=180)
 
 st.title("Bison Wealth 401(k) Growth Simulator")
