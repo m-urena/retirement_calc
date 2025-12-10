@@ -7,7 +7,6 @@ import os
 
 st.set_page_config(
     page_title="Bison Wealth | 401(k) Growth Simulator",
-    page_icon="🦬",
     layout="wide"
 )
 
