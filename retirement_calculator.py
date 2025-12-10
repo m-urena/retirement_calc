@@ -153,18 +153,22 @@ with right:
     ))
 
     # End labels
+    # Amount to offset labels so they never overlap the line
+    offset_baseline = (df["Baseline"].iloc[-1] * 0.04)   # 4% above line
+    offset_help     = (df["With Help"].iloc[-1] * 0.04)
+    
     fig.add_annotation(
-        x=df["Age"].iloc[-1],
-        y=df["Baseline"].iloc[-1],
+        x=df["Age"].iloc[-1] + 0.2,   # push slightly right
+        y=df["Baseline"].iloc[-1] + offset_baseline,
         text=f"${df['Baseline'].iloc[-1]:,.0f}",
         showarrow=False,
         font=dict(color="#7D7D7D", size=13)
     )
-
+    
     fig.add_annotation(
-        x=df["Age"].iloc[-1],
-        y=df["With Help"].iloc[-1],
-        text=f"${df['With Help'].iloc[-1]:,.0f}",
+        x=df["Age"].iloc[-1] + 0.2,
+        y=df["With Help"].iloc[-1] + offset_help,
+        text=f"${df['With Help"].iloc[-1]:,.0f}",
         showarrow=False,
         font=dict(color="#25385A", size=16)
     )
