@@ -138,9 +138,6 @@ if calculate and salary_input and balance_input:
         "created_at": datetime.utcnow().isoformat()
     }).execute()
 
-    st.success("Saved to database!")
-
-
 # --------------------------------------------------
 # Compute Projection ONLY from stored values
 # --------------------------------------------------
