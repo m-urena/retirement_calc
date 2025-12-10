@@ -28,9 +28,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # LOGO — smaller size now
+# --- Logo (with safe top spacing so it never gets cut off) ---
+st.markdown(
+    """
+    <div class="logo-wrapper" style="margin-top:35px;">
+    """,
+    unsafe_allow_html=True
+)
+
 logo_path = "Bison Wealth Logo.png"
 if os.path.exists(logo_path):
     st.image(logo_path, width=130)
+
+st.markdown("</div>", unsafe_allow_html=True)
+
 
 st.markdown("<h1>Bison Wealth 401(k) Growth Simulator</h1>", unsafe_allow_html=True)
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
@@ -154,9 +165,13 @@ if balance and salary:
         """,
         unsafe_allow_html=True
     )
+# BIG SPACER BEFORE DISCLOSURE
+st.markdown("<div style='height:120px;'></div>", unsafe_allow_html=True)
 
-    st.caption("""
-For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contribution (7.8% employee, 4.6% employer).  
+st.caption("""
+For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contribution  
+(7.8% employee, 4.6% employer). Compounded monthly.
+
 Performance without help is the 5yr annualized return of the S&P Target Date 2035 Index (as of 12/04/2025).  
 With help is increased by 3.32% based on the Hewitt Study.
 """)
