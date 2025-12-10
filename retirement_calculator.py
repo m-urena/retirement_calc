@@ -102,14 +102,17 @@ def compute_projection(age, salary, balance):
     baseline = growth_projection_monthly(balance, contribs, rate_no_help)
     help_growth = growth_projection_monthly(balance, contribs, rate_help)
 
-    ages = list(range(age, target_age + 1))
+    # FIX: Make ages match the number of projection points
+    ages = list(range(age, age + len(baseline)))
 
     df = pd.DataFrame({
         "Age": ages,
         "Baseline": baseline,
         "With Help": help_growth
     })
+
     return df
+
 
 # Compute default chart or updated chart on calculate
 df = compute_projection(age, salary or 0, balance or 0)
