@@ -18,17 +18,20 @@ st.set_page_config(page_title="Bison Wealth 401(k) Growth Simulator",
 # -----------------------------
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+
 # -----------------------------
-# Header + Branding
+# Logo (safe load)
 # -----------------------------
-logo_path = "bison_logo.png"
-st.image(logo_path, width=180)
+logo_path = "Bison_Wealth_Logo.png"
+if os.path.exists(logo_path):
+    st.image(logo_path, width=150)
+
 
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
+
 
 # -----------------------------
 # Helper: clean numeric input
@@ -39,12 +42,12 @@ def parse_number(x):
     except:
         return None
 
+
 # -----------------------------
-# Calculation
+# Projection Calculation
 # -----------------------------
 def compute_projection(age, salary, balance):
 
-    # Safety checks — no None allowed
     if salary is None:
         salary = 0
     if balance is None:
@@ -52,50 +55,48 @@ def compute_projection(age, salary, balance):
 
     target_age = 65
     years = target_age - age
-    num_points = years + 1   # required array length
+    num_points = years + 1
 
     salary_growth_rate = 0.03
-    employee_contrib = 0.078
-    employer_contrib = 0.046
-    contribution_rate = employee_contrib + employer_contrib
+    employee = 0.078
+    employer = 0.046
+    contrib_rate = employee + employer
 
-    non_help_rate = 0.0847
-    help_rate = non_help_rate + 0.0332
+    without_help = 0.0847
+    with_help_rate = without_help + 0.0332
 
-    # Salary projections
-    salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(num_points)]
-    annual_contribs = [s * contribution_rate for s in salaries]
+    salaries = [salary * ((1 + salary_growth_rate)**yr) for yr in range(num_points)]
+    annual_contribs = [s * contrib_rate for s in salaries]
 
-    # Monthly compounding projection
-    def project(start_balance, annual_contribs, annual_rate):
-        total = start_balance
-        values = [start_balance]
-        monthly_rate = (1 + annual_rate) ** (1/12) - 1
+    def project(start, contribs, rate):
+        total = start
+        vals = [start]
+        monthly_rate = (1 + rate)**(1/12) - 1
 
-        for yearly_contrib in annual_contribs:
-            monthly_contrib = yearly_contrib / 12
+        for yearly in contribs:
+            monthly_contrib = yearly / 12
             for _ in range(12):
                 total = total * (1 + monthly_rate) + monthly_contrib
-            values.append(total)
+            vals.append(total)
 
-        return values[:num_points]  # enforce length EXACTLY
+        return vals[:num_points]
 
-    baseline = project(balance, annual_contribs, non_help_rate)
-    with_help = project(balance, annual_contribs, help_rate)
+    baseline = project(balance, annual_contribs, without_help)
+    helpvals = project(balance, annual_contribs, with_help_rate)
 
     ages = list(range(age, age + num_points))
 
-    # Build DataFrame safely
     df = pd.DataFrame({
         "age": ages,
         "baseline": baseline,
-        "with_help": with_help
+        "with_help": helpvals
     })
 
     return df
 
+
 # -----------------------------
-# Input Section
+# Inputs Section
 # -----------------------------
 col_left, col_right = st.columns([1, 2])
 
@@ -104,9 +105,9 @@ with col_left:
     st.subheader("Your Information")
 
     age = st.number_input("Your Age", min_value=18, max_value=100, value=42, step=1)
-    salary_str = st.text_input("Current Annual Salary ($)", value="84000")
-    balance_str = st.text_input("Current 401(k) Balance ($)", value="76500")
-    company = st.text_input("Company Name", value="")
+    salary_str = st.text_input("Current Annual Salary ($)", value="84,000")
+    balance_str = st.text_input("Current 401(k) Balance ($)", value="76,500")
+    company = st.text_input("Company Name", placeholder="Where do you work?")
 
     salary = parse_number(salary_str)
     balance = parse_number(balance_str)
@@ -115,75 +116,80 @@ with col_left:
 
 
 # -----------------------------
-# Compute or Load Default
+# Evaluate Projection (always show)
 # -----------------------------
-if salary and balance:
-    df = compute_projection(age, salary, balance)
-else:
-    df = compute_projection(42, 84000, 76500)
+df = compute_projection(age, salary, balance)
+
+
+# -----------------------------
+# Save to Supabase on Calculate
+# -----------------------------
+if calculate and salary and balance:
+    supabase.table("submissions").insert({
+        "age": age,
+        "salary": salary,
+        "balance": balance,
+        "company": company if company.strip() else "Unknown",
+        "created_at": datetime.utcnow().isoformat()
+    }).execute()
+    st.success("Saved to database!")
 
 
 # -----------------------------
 # Plotly Chart
 # -----------------------------
 with col_right:
-
     st.subheader("Estimated 401(k) Growth")
 
     fig = go.Figure()
 
-    # Baseline line
     fig.add_trace(go.Scatter(
-        x=df["Age"], y=df["Baseline"],
+        x=df["age"], y=df["baseline"],
         mode="lines",
         name="On Your Lonesome (8.5%)",
         line=dict(color="#7D7D7D", width=3),
         hovertemplate="Age %{x}<br>$%{y:,.0f}<extra></extra>"
     ))
 
-    # Help line
     fig.add_trace(go.Scatter(
-        x=df["Age"], y=df["With Help"],
+        x=df["age"], y=df["with_help"],
         mode="lines",
         name="With Bison by Your Side (11.8%)",
         line=dict(color="#25385A", width=4),
         hovertemplate="Age %{x}<br>$%{y:,.0f}<extra></extra>"
     ))
 
-    # Offset labels so they don't overlap
-    offset_base = df["Baseline"].iloc[-1] * 0.04
-    offset_help = df["With Help"].iloc[-1] * 0.04
+    # End label offsets
+    offset_base = df["baseline"].iloc[-1] * 0.04
+    offset_help = df["with_help"].iloc[-1] * 0.04
 
-    # End label: Baseline
     fig.add_annotation(
-        x=df["Age"].iloc[-1] + 0.3,
-        y=df["Baseline"].iloc[-1] + offset_base,
-        text=f"${df['Baseline'].iloc[-1]:,.0f}",
+        x=df["age"].iloc[-1] + 0.3,
+        y=df["baseline"].iloc[-1] + offset_base,
+        text=f"${df['baseline'].iloc[-1]:,.0f}",
         showarrow=False,
-        font=dict(color="#7D7D7D", size=13)
+        font=dict(color="#7D7D7D", size=14)
     )
 
-    # End label: With Help
     fig.add_annotation(
-        x=df["Age"].iloc[-1] + 0.3,
-        y=df["With Help"].iloc[-1] + offset_help,
-        text=f"${df['With Help'].iloc[-1]:,.0f}",
+        x=df["age"].iloc[-1] + 0.3,
+        y=df["with_help"].iloc[-1] + offset_help,
+        text=f"${df['with_help'].iloc[-1]:,.0f}",
         showarrow=False,
-        font=dict(color="#25385A", size=16)
+        font=dict(color="#25385A", size=17)
     )
 
     fig.update_layout(
         height=450,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
         margin=dict(l=20, r=20, t=20, b=40),
-        xaxis_title="Age",
-        yaxis_title="Portfolio Value ($)",
-        hovermode="x",
+        xaxis=dict(title="Age", fixedrange=True, gridcolor="#E0E0E0"),
+        yaxis=dict(title="Portfolio Value ($)", fixedrange=True, gridcolor="#E0E0E0"),
+        hovermode="x unified"
     )
 
-    # Disable zoom + pan
-    fig.update_layout(
-        dragmode=False,
-    )
+    fig.update_layout(dragmode=False)
     fig.update_xaxes(fixedrange=True)
     fig.update_yaxes(fixedrange=True)
 
@@ -191,13 +197,13 @@ with col_right:
 
 
 # -----------------------------
-# CTA + Difference
+# CTA Section
 # -----------------------------
-final_diff = df["With Help"].iloc[-1] - df["Baseline"].iloc[-1]
+final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 
 st.markdown(
     f"""
-    <div style="text-align:center; font-size:18px;">
+    <div style="text-align:center; font-size:18px; margin-top:15px;">
         Is <b style="color:#25385A;">${final_diff:,.0f}</b> worth 30 minutes of your time?
     </div>
     """,
@@ -219,26 +225,11 @@ st.markdown(
 
 
 # -----------------------------
-# Save to Supabase if Calculate Pressed
-# -----------------------------
-if calculate and salary and balance:
-
-    supabase.table("submissions").insert({
-        "age": age,
-        "salary": salary,
-        "balance": balance,
-        "company": company if company.strip() else "Unknown",
-        "created_at": datetime.utcnow().isoformat()
-    }).execute()
-
-    st.success("Saved to database!")
-
-
-# -----------------------------
 # Disclosure
 # -----------------------------
+st.markdown("<br><br>", unsafe_allow_html=True)
 st.caption("""
-For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contribution (7.8% employee, 4.6% employer).  
-Performance without help is the 5yr annualized return of the S&P Target Date 2035 Index (as of 12/04/2025).  
+For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contribution (7.8% employee, 4.6% employer).
+Performance without help is the 5-year annualized return of the S&P Target Date 2035 Index (as of 12/04/2025).
 With help is increased by 3.32% based on the Hewitt Study.
 """)
