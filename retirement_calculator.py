@@ -175,6 +175,3 @@ For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual
 Performance without help is the 5yr annualized return of the S&P Target Date 2035 Index (as of 12/04/2025).  
 With help is increased by 3.32% based on the Hewitt Study.
 """)
-
-else:
-    st.info("Please enter your age, salary, and 401(k) balance to generate your projection.")
