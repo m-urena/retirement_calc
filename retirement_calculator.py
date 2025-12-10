@@ -5,65 +5,40 @@ import plotly.graph_objects as go
 from PIL import Image
 import os
 
-# ==========================================================
-# PAGE CONFIG
-# ==========================================================
 st.set_page_config(
     page_title="Bison Wealth | 401(k) Growth Simulator",
     page_icon="🦬",
     layout="wide"
 )
 
-# ==========================================================
-# GLOBAL CSS — CLEANER & NO EXTRA BOXES
-# ==========================================================
+# GLOBAL CSS
 st.markdown("""
 <style>
-
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 0.5rem !important;
         max-width: 1500px !important;
     }
-
-    /* Clean section title */
     .section-title {
         font-size: 20px;
         font-weight: 700;
         margin-bottom: 0.4rem;
         color: #25385A;
     }
-
-    input[type="text"], input[type="number"] {
-        height: 42px !important;
-        border-radius: 8px !important;
-    }
-
 </style>
 """, unsafe_allow_html=True)
 
-
-# ==========================================================
-# LOGO + HEADER
-# ==========================================================
+# LOGO — smaller size now
 logo_path = "Bison Wealth Logo.png"
 if os.path.exists(logo_path):
-    st.image(logo_path, width=200)
+    st.image(logo_path, width=130)
 
 st.markdown("<h1>Bison Wealth 401(k) Growth Simulator</h1>", unsafe_allow_html=True)
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
-st.write("")  # subtle spacing
+st.write("")
 
-
-# ==========================================================
 # 2-COLUMN MAIN LAYOUT
-# Left side: Inputs
-# Right side: Chart
-# ==========================================================
-left, right = st.columns([1, 2])  # wider graph
+left, right = st.columns([1, 2])
 
-# --------------------------
-# LEFT PANEL — INPUTS
-# --------------------------
 with left:
     st.markdown("<div class='section-title'>Your Information</div>", unsafe_allow_html=True)
 
@@ -71,7 +46,6 @@ with left:
     salary_str = st.text_input("Current Annual Salary ($)", value="100,000")
     balance_str = st.text_input("Current 401(k) Balance ($)", value="200,000")
 
-    # Parse helper
     def parse_number(x):
         try:
             return float(x.replace(",", "").strip())
@@ -81,28 +55,21 @@ with left:
     balance = parse_number(balance_str)
     salary = parse_number(salary_str)
 
-
-# ==========================================================
-# IF NUMBERS ENTERED → CALCULATE + SHOW CHART ON RIGHT
-# ==========================================================
+# Only compute after all numbers valid
 if balance and salary:
 
     target_age = 65
     years = max(0, target_age - age)
 
     salary_growth_rate = 0.03
-    employee_contrib = 0.078
-    employer_contrib = 0.046
-    contribution_rate = employee_contrib + employer_contrib
+    contribution_rate = 0.078 + 0.046
 
-    # FIXED RETURNS
     non_help_rate = 0.0847
     help_rate = non_help_rate + 0.0332
 
     salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years + 1)]
     annual_contribs = [s * contribution_rate for s in salaries]
 
-    # Monthly compounding model
     def growth_projection_monthly(start_balance, annual_contribs, annual_rate):
         total = start_balance
         values = [start_balance]
@@ -122,13 +89,12 @@ if balance and salary:
     final_help_val = with_help[-1]
     difference = final_help_val - final_lonesome_val
 
-    # --------------------------
-    # RIGHT PANEL — CHART
-    # --------------------------
+    # RIGHT SIDE — FIXED TITLE (no “undefined” anymore)
     with right:
         st.markdown("<div class='section-title'>Estimated 401(k) Growth</div>", unsafe_allow_html=True)
 
         fig = go.Figure()
+
         fig.add_trace(go.Scatter(
             x=ages, y=baseline,
             mode="lines",
@@ -143,46 +109,39 @@ if balance and salary:
             line=dict(color="#25385A", width=6)
         ))
 
-        # End labels
         fig.add_annotation(
-            x=ages[-1] - 0.2, y=baseline[-1],
+            x=ages[-1], y=baseline[-1],
             text=f"${baseline[-1]:,.0f}",
             showarrow=False,
-            font=dict(color="#7D7D7D", size=13),
+            font=dict(color="#7D7D7D", size=12),
             xanchor="left"
         )
 
         fig.add_annotation(
-            x=ages[-1] - 0.2, y=with_help[-1],
+            x=ages[-1], y=with_help[-1],
             text=f"${with_help[-1]:,.0f}",
             showarrow=False,
-            font=dict(color="#25385A", size=16),
+            font=dict(color="#25385A", size=14),
             xanchor="left"
         )
 
         fig.update_layout(
-            title=None,
             paper_bgcolor="white",
             plot_bgcolor="white",
-            xaxis=dict(title="Age", color="#414546", gridcolor="#E0E0E0", range=[age, 67]),
-            yaxis=dict(title="Portfolio Value ($)", color="#414546", gridcolor="#E0E0E0"),
-            legend=dict(bgcolor="white", font=dict(color="#414546")),
+            xaxis=dict(title="Age", gridcolor="#E0E0E0", range=[age, 67]),
+            yaxis=dict(title="Portfolio Value ($)", gridcolor="#E0E0E0"),
             hovermode="x unified",
-            margin=dict(l=10, r=10, t=20, b=10),
-            height=450,
+            margin=dict(l=20, r=20, t=10, b=10),
+            height=360   # shorter chart → no scrolling!
         )
 
         st.plotly_chart(fig, use_container_width=True)
 
-
-    # ==========================================================
-    # BOTTOM — DIFFERENCE + CTA
-    # ==========================================================
-    st.markdown("---")
+    # CALL TO ACTION — moved up, no scrolling required
     st.markdown(
         f"""
-        <div style="text-align:center; margin-top:10px; margin-bottom:40px;">
-            <p style="font-size:20px; color:#414546;">
+        <div style="text-align:center; margin-top:10px;">
+            <p style="font-size:18px; color:#414546;">
                 Is <span style="color:#25385A; font-weight:700;">${difference:,.0f}</span>
                 worth 30 minutes of your time?
             </p>
@@ -196,15 +155,11 @@ if balance and salary:
         unsafe_allow_html=True
     )
 
-    # DISCLOSURE
     st.caption("""
-For illustrative purposes only. Assumes 3% annual salary growth and 12.4% of salary contributed annually
-(7.8% employee, 4.6% employer). Compounded monthly.
-
-Performance without help is the 5yr annualized return of the S&P Target Date 2035 Index as of 12/04/2025.
-With help is bumped up by 3.32% because of the Hewitt Study.
+For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contribution (7.8% employee, 4.6% employer).  
+Performance without help is the 5yr annualized return of the S&P Target Date 2035 Index (as of 12/04/2025).  
+With help is increased by 3.32% based on the Hewitt Study.
 """)
 
 else:
     st.info("Please enter your age, salary, and 401(k) balance to generate your projection.")
-
