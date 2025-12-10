@@ -44,42 +44,55 @@ def parse_number(x):
 # -----------------------------
 def compute_projection(age, salary, balance):
 
+    # Safety checks — no None allowed
+    if salary is None:
+        salary = 0
+    if balance is None:
+        balance = 0
+
     target_age = 65
-    years = max(0, target_age - age)
+    years = target_age - age
+    num_points = years + 1   # required array length
 
     salary_growth_rate = 0.03
-    contrib_rate = 0.078 + 0.046  # employee + employer
+    employee_contrib = 0.078
+    employer_contrib = 0.046
+    contribution_rate = employee_contrib + employer_contrib
 
     non_help_rate = 0.0847
     help_rate = non_help_rate + 0.0332
 
-    salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years + 1)]
-    annual_contribs = [s * contrib_rate for s in salaries]
+    # Salary projections
+    salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(num_points)]
+    annual_contribs = [s * contribution_rate for s in salaries]
 
-    def monthly_growth(start, annual_contribs, annual_rate):
-        total = start
-        values = [start]
+    # Monthly compounding projection
+    def project(start_balance, annual_contribs, annual_rate):
+        total = start_balance
+        values = [start_balance]
         monthly_rate = (1 + annual_rate) ** (1/12) - 1
+
         for yearly_contrib in annual_contribs:
             monthly_contrib = yearly_contrib / 12
             for _ in range(12):
                 total = total * (1 + monthly_rate) + monthly_contrib
             values.append(total)
-        return values
 
-    baseline = monthly_growth(balance, annual_contribs, non_help_rate)
-    help_vals = monthly_growth(balance, annual_contribs, help_rate)
+        return values[:num_points]  # enforce length EXACTLY
 
-    ages = list(range(age, target_age + 1))
+    baseline = project(balance, annual_contribs, non_help_rate)
+    with_help = project(balance, annual_contribs, help_rate)
 
+    ages = list(range(age, age + num_points))
+
+    # Build DataFrame safely
     df = pd.DataFrame({
-        "Age": ages,
-        "Baseline": baseline,
-        "With Help": help_vals
+        "age": ages,
+        "baseline": baseline,
+        "with_help": with_help
     })
 
     return df
-
 
 # -----------------------------
 # Input Section
