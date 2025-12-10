@@ -101,122 +101,110 @@ with left:
 with right:
     st.subheader("Estimated 401(k) Growth")
 
-    if not calculate:
-        st.info("Enter your info on the left and click **Calculate** to generate your projection.")
-    else:
-        if salary and balance:
+    # Always compute the projection using current values
+if salary and balance:
 
-            target_age = 65
-            years = max(0, target_age - age)
+    target_age = 65
+    years = max(0, target_age - age)
 
-            salary_growth_rate = 0.03
-            contrib_rate = 0.124  # 12.4%
+    salary_growth_rate = 0.03
+    contrib_rate = 0.124  # 12.4%
 
-            # Static returns
-            non_help_rate = 0.0847
-            help_rate = non_help_rate + 0.0332
+    # Static returns
+    non_help_rate = 0.0847
+    help_rate = non_help_rate + 0.0332
 
-            salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years + 1)]
-            annual_contribs = [s * contrib_rate for s in salaries]
+    salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years + 1)]
+    annual_contribs = [s * contrib_rate for s in salaries]
 
-            def projection(start_balance, annual_contribs, annual_rate):
-                total = start_balance
-                values = [start_balance]
-                monthly_rate = (1 + annual_rate) ** (1/12) - 1
-                for yearly in annual_contribs:
-                    m = yearly / 12
-                    for _ in range(12):
-                        total = total * (1 + monthly_rate) + m
-                    values.append(total)
-                return values
+    def projection(start_balance, annual_contribs, annual_rate):
+        total = start_balance
+        values = [start_balance]
+        monthly_rate = (1 + annual_rate) ** (1/12) - 1
+        for yearly in annual_contribs:
+            m = yearly / 12
+            for _ in range(12):
+                total = total * (1 + monthly_rate) + m
+            values.append(total)
+        return values
 
-            baseline = projection(balance, annual_contribs, non_help_rate)
-            help_vals = projection(balance, annual_contribs, help_rate)
+    baseline = projection(balance, annual_contribs, non_help_rate)
+    help_vals = projection(balance, annual_contribs, help_rate)
 
-            ages = list(range(age, target_age + 1))
+    ages = list(range(age, target_age + 1))
 
-            final_baseline = baseline[-1]
-            final_help = help_vals[-1]
-            diff = final_help - final_baseline
+    final_baseline = baseline[-1]
+    final_help = help_vals[-1]
+    diff = final_help - final_baseline
 
-            # -------------------------
-            # GRAPH
-            # -------------------------
-            fig = go.Figure()
+    # GRAPH (always shown)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=ages, y=baseline,
+        mode="lines",
+        name=f"On Your Lonesome ({non_help_rate*100:.1f}%)",
+        line=dict(color="#7D7D7D", width=3)
+    ))
+    fig.add_trace(go.Scatter(
+        x=ages, y=help_vals,
+        mode="lines",
+        name=f"With Bison by Your Side ({help_rate*100:.1f}%)",
+        line=dict(color="#25385A", width=5)
+    ))
 
-            fig.add_trace(go.Scatter(
-                x=ages, y=baseline,
-                mode="lines",
-                name=f"On Your Lonesome ({non_help_rate*100:.1f}%)",
-                line=dict(color="#7D7D7D", width=3)
-            ))
+    fig.update_layout(
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        xaxis=dict(title="Age", gridcolor="#E0E0E0"),
+        yaxis=dict(title="Portfolio Value ($)", gridcolor="#E0E0E0"),
+        height=400,
+        margin=dict(l=10, r=10, t=25, b=10)
+    )
 
-            fig.add_trace(go.Scatter(
-                x=ages, y=help_vals,
-                mode="lines",
-                name=f"With Bison by Your Side ({help_rate*100:.1f}%)",
-                line=dict(color="#25385A", width=5)
-            ))
+    st.plotly_chart(fig, use_container_width=True)
 
-            fig.update_layout(
-                paper_bgcolor="white",
-                plot_bgcolor="white",
-                xaxis=dict(title="Age", gridcolor="#E0E0E0"),
-                yaxis=dict(title="Portfolio Value ($)", gridcolor="#E0E0E0"),
-                height=400,
-                margin=dict(l=10, r=10, t=25, b=10)
-            )
+    # CTA area
+    st.markdown(
+        f"""
+        <div style="text-align:center; margin-top:10px;">
+            Is <span style="color:#25385A; font-weight:700;">
+                ${diff:,.0f}
+            </span> worth 30 minutes of your time?
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-            st.plotly_chart(fig, use_container_width=True)
+    st.markdown(
+        f"""
+        <div style="text-align:center; margin-top:5px; margin-bottom:15px;">
+            <a href="https://calendly.com/placeholder-link" target="_blank"
+            style="
+                background-color:#C17A49;
+                color:white;
+                padding:12px 24px;
+                text-decoration:none;
+                border-radius:8px;
+                font-weight:600;
+                font-size:16px;
+            ">
+                Schedule a Conversation
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-            # -------------------------
-            # CTA SECTION
-            # -------------------------
-            st.markdown(
-                f"""
-                <div style="text-align:center; margin-top:10px;">
-                    Is <span style="color:#25385A; font-weight:700;">
-                        ${diff:,.0f}
-                    </span> worth 30 minutes of your time?
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            st.markdown(
-                f"""
-                <div style="text-align:center; margin-top:5px; margin-bottom:15px;">
-                    <a href="https://calendly.com/placeholder-link" target="_blank"
-                    style="
-                        background-color:#C17A49;
-                        color:white;
-                        padding:12px 24px;
-                        text-decoration:none;
-                        border-radius:8px;
-                        font-weight:600;
-                        font-size:16px;
-                    ">
-                        Schedule a Conversation
-                    </a>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            # -------------------------
-            # INSERT INTO SUPABASE
-            # -------------------------
-            try:
-                supabase.table("submissions").insert({
-                    "age": age,
-                    "salary": salary,
-                    "balance": balance,
-                    "company": company_final,
-                    "ip_address": st.session_state.get("ip", None),
-                    "user_agent": st.session_state.get("ua", None),
-                }).execute()
-            except Exception as e:
-                st.warning("Saved locally but could not send to database.")
+    # Only insert into database when user clicks Calculate
+    if calculate:
+        supabase.table("submissions").insert({
+            "age": age,
+            "salary": salary,
+            "balance": balance,
+            "company": company_final,
+            "ip_address": st.session_state.get("ip"),
+            "user_agent": st.session_state.get("ua")
+        }).execute()
 
 
 # ====================================================
