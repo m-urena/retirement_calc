@@ -23,7 +23,7 @@ st.markdown("""
 
 logo_path = "./bison_logo.png"  # safest path for Streamlit Cloud
 
-col1, col2 = st.columns([6, 3])  # adjust spacing as needed
+col1, col2 = st.columns([4, 1])  # adjust spacing as needed
 
 with col2:
     if os.path.exists(logo_path):
