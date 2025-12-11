@@ -161,23 +161,13 @@ if calculate and salary_input and balance_input:
     st.session_state.salary_used = salary_input
     st.session_state.balance_used = balance_input
 
-    try:
-        # Supabase v2 insert syntax
-        resp = supabase.table("submissions").insert({
-            "age": age_input,
-            "salary": salary_input,
-            "balance": balance_input,
-            "company": company.strip() if company.strip() else "Unknown",
-            "created_at": datetime.utcnow().isoformat()
-        }).execute()
-
-        st.write("SUPABASE INSERT RESPONSE:")
-        st.json(resp)
-
-    except Exception as e:
-        st.error("INSERT FAILED")
-        st.write(e)
-        st.write("KEY PREFIX:", SUPABASE_KEY[:20])
+    resp = supabase.table("submissions").insert({
+        "age": age_input,
+        "salary": salary_input,
+        "balance": balance_input,
+        "company": company.strip() if company.strip() else "Unknown",
+        "created_at": datetime.utcnow().isoformat()
+    }).execute()
 
 # --------------------------------------------------
 # Compute Projection ONLY from stored values
