@@ -298,17 +298,28 @@ st.markdown(
 )
 
 
+# Determine Calendly link based on company selection
+DEFAULT_CALENDLY = "https://calendly.com/placeholder"
+ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
+
+normalized_company = company.strip().lower()
+calendly_link = (
+    ALT_CALENDLY
+    if normalized_company == "my company is not listed".lower()
+    else DEFAULT_CALENDLY
+)
+
 st.markdown(
     """
     <div style="text-align:center; margin-top:20px;">
-        <a href="https://calendly.com/placeholder" target="_blank"
+        <a href="{calendly_link}" target="_blank"
            style="background-color:#C17A49; color:white; padding:14px 28px;
                   text-decoration:none; border-radius:8px; font-size:18px;">
            Schedule a Conversation
         </a>
     </div>
-    """,
-    unsafe_allow_html=True
+    """.format(calendly_link=calendly_link),
+    unsafe_allow_html=True,
 )
 
 
