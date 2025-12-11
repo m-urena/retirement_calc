@@ -10,14 +10,15 @@ import os
 # ==========================================================
 st.set_page_config(page_title="Bison 401(k) Simulator", layout="wide")
 
-# CSS setup for logo position (left-aligned) and button color
+# CSS setup to force the logo to the right, fix spacing, and change the primary button color
 st.markdown("""
 <style>
-/* 1. Set the logo padding/margin to achieve the desired left alignment and spacing */
-.bison-logo {
-    padding-top: 20px;
-    padding-bottom: 20px;
-    margin-bottom: -30px; /* Pull the title up a bit */
+/* 1. Container to push the logo to the far right */
+.logo-container-right {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin-bottom: -40px; /* Adjust spacing above the title */
 }
 
 /* 2. Change the 'primary' button (Calculate) color to match the Schedule button (#C17A49) */
@@ -28,10 +29,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# The logo path is assumed to be correct
-# logo_path = "./bison_logo.png"
 
-st.markdown('<div class="bison-logo">', unsafe_allow_html=True)
+# The logo display now uses the right-alignment container
+st.markdown('<div class="logo-container-right">', unsafe_allow_html=True)
 st.image("bison_logo.png", width=160)
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -154,6 +154,7 @@ with left:
 
     company = st.text_input("Company Name", placeholder="Where do you work?")
     
+    # This button will now be colored #C17A49 due to the :root CSS variable override
     calculate = st.button("Calculate", type="primary")
 
 # Convert numbers
@@ -181,7 +182,7 @@ if calculate and salary and balance:
             "company": company if company else "Unknown"
         }).execute()
     except Exception as e:
-        # st.error(f"Could not connect to database: {e}") # Log error but don't stop app
+        # Log error but don't stop app
         pass
 
 
