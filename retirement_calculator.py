@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from supabase import create_client, Client
 import os
+import base64
 
 
 # --------------------------------------------------
