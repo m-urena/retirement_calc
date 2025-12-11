@@ -127,7 +127,7 @@ with left:
     balance_str = st.text_input("Current 401(k) Balance ($)", value=f"{DEFAULT_BALANCE:,}")
 
     company = st.text_input("Company Name", placeholder="Where do you work?")
-
+    \n
     calculate = st.button("Calculate", type="primary")
 
 # Convert numbers
