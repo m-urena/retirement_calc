@@ -177,7 +177,7 @@ if calculate and salary_input and balance_input:
     except Exception as e:
         st.write("INSERT FAILED:")
         st.write(e)
-
+        st.write("KEY PREFIX:", SUPABASE_KEY[:20])
 # --------------------------------------------------
 # Compute Projection ONLY from stored values
 # --------------------------------------------------
