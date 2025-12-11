@@ -28,7 +28,13 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # --------------------------------------------------
 # Logo
 # --------------------------------------------------
-logo_path = "bison_logo.png"
+
+logo_path = os.path.join(os.path.dirname(__file__), "bison_logo.png")
+if os.path.exists(logo_path):
+    st.image(logo_path, width=150)
+else:
+    st.write("Logo not found:", logo_path)
+    
 if os.path.exists(logo_path):
     st.markdown(
         f"""
