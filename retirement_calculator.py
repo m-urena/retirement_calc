@@ -124,6 +124,24 @@ with left:
     salary_input = parse_number(salary_str)
     balance_input = parse_number(balance_str)
 
+    
+    st.markdown("""
+        <style>
+        div.stButton > button:first-child {
+            background-color: #C17A49 !important;
+            color: white !important;
+            border-radius: 6px !important;
+            height: 40px !important;
+            padding-left: 20px !important;
+            padding-right: 20px !important;
+            border: none !important;
+        }
+        div.stButton > button:first-child:hover {
+            background-color: #a76535 !important;
+            color: white !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
     calculate = st.button("Calculate", type="primary")
 
 
