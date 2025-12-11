@@ -2,5 +2,5 @@ streamlit
 pandas
 numpy
 plotly
-supabase==2.4.3
+supabase==1.0.3
 requests
