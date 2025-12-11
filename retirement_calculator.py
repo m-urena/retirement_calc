@@ -38,7 +38,7 @@ if os.path.exists(logo_path):
 
     st.markdown(
         f"""
-        <div style="width:100%; text-align:right; margin-top:70px; margin-bottom:10px;">
+        <div style="width:100%; text-align:right; margin-top:150px; margin-bottom:10px;">
             <img src="data:image/png;base64,{logo_data}" width="150">
         </div>
         """,
