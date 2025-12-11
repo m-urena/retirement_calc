@@ -32,9 +32,8 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 logo_path = os.path.join(os.path.dirname(__file__), "bison_logo.png")
 logo_b64 = base64.b64encode(open(logo_path, "rb").read()).decode()
-
-        
-    st.markdown(
+ 
+st.markdown(
     f"""
     <div style="
         position: absolute;
