@@ -162,13 +162,15 @@ if calculate and salary_input and balance_input:
     st.session_state.salary_used = salary_input
     st.session_state.balance_used = balance_input
 
-    supabase.table("submissions").insert({
-        "age": age_input,
-        "salary": salary_input,
-        "balance": balance_input,
-        "company": company if company.strip() else "Unknown",
-        "created_at": datetime.utcnow().isoformat()
-    }).execute()
+    resp = supabase.table("submissions").insert({
+    "age": age_input,
+    "salary": salary_input,
+    "balance": balance_input,
+    "company": company if company.strip() else "Unknown",
+    "created_at": datetime.utcnow().isoformat()
+}).execute()
+
+st.write(resp)
 
 # --------------------------------------------------
 # Compute Projection ONLY from stored values
