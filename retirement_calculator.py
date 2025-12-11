@@ -35,11 +35,16 @@ logo_path = os.path.join(os.path.dirname(__file__), "bison_logo.png")
 if os.path.exists(logo_path):
     with open(logo_path, "rb") as f:
         logo_data = base64.b64encode(f.read()).decode()
-
+        
     st.markdown(
         f"""
-        <div style="width:100%; text-align:right; margin-top:300px; margin-bottom:5px;">
-            <img src="data:image/png;base64,{logo_data}" width="150">
+        <div style="
+            position: absolute;
+            top: 80px;        /* moves ONLY the logo down */
+            right: 40px;      /* keeps it aligned on the right */
+            z-index: 999;     /* stays above other content */
+        ">
+            <img src="data:image/png;base64,{logo_b64}" width="150">
         </div>
         """,
         unsafe_allow_html=True
