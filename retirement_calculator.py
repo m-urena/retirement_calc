@@ -21,12 +21,20 @@ st.set_page_config(
 # --------------------------------------------------
 # Supabase Setup
 # --------------------------------------------------
+
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]  # MUST be publishable key
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY )
-
-
+supabase: Client = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY,
+    options={
+        "headers": {
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}"
+        }
+    }
+)
 # --------------------------------------------------
 # Logo
 # --------------------------------------------------
