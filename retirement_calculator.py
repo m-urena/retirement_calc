@@ -31,24 +31,22 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # --------------------------------------------------
 
 logo_path = os.path.join(os.path.dirname(__file__), "bison_logo.png")
+logo_b64 = base64.b64encode(open(logo_path, "rb").read()).decode()
 
-if os.path.exists(logo_path):
-    with open(logo_path, "rb") as f:
-        logo_data = base64.b64encode(f.read()).decode()
         
     st.markdown(
-        f"""
-        <div style="
-            position: absolute;
-            top: 80px;        /* moves ONLY the logo down */
-            right: 40px;      /* keeps it aligned on the right */
-            z-index: 999;     /* stays above other content */
-        ">
-            <img src="data:image/png;base64,{logo_b64}" width="150">
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    f"""
+    <div style="
+        position: absolute;
+        top: 80px;       /* move the logo down (increase this number to go lower) */
+        right: 40px;     /* move logo left or right */
+        z-index: 999;
+    ">
+        <img src="data:image/png;base64,{logo_b64}" width="150">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
     
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
