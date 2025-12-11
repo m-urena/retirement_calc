@@ -23,8 +23,13 @@ st.markdown("""
 
 logo_path = "./bison_logo.png"  # safest path for Streamlit Cloud
 
-if os.path.exists(logo_path):
-    st.image(logo_path, width=160)
+col1, col2 = st.columns([6, 1])  # adjust spacing as needed
+
+with col2:
+    if os.path.exists(logo_path):
+        st.image(logo_path, use_column_width=True)
+    else:
+        st.warning("Logo missing.")
 
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
@@ -127,7 +132,7 @@ with left:
     balance_str = st.text_input("Current 401(k) Balance ($)", value=f"{DEFAULT_BALANCE:,}")
 
     company = st.text_input("Company Name", placeholder="Where do you work?")
-    \n
+    
     calculate = st.button("Calculate", type="primary")
 
 # Convert numbers
