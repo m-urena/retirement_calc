@@ -1,283 +1,234 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 from supabase import create_client
-import os
+import datetime
 
-# ==========================================================
-# PAGE SETUP
-# ==========================================================
-st.set_page_config(page_title="Bison 401(k) Simulator", layout="wide")
+# -----------------------------
+# PAGE CONFIG
+# -----------------------------
+st.set_page_config(
+    page_title="Bison Wealth 401(k) Growth Simulator",
+    layout="wide"
+)
 
-# CSS to fix button color and add spacing
-st.markdown("""
-<style>
-/* 1. FORCE THE CALCULATE BUTTON COLOR TO BISON ORANGE (#C17A49) */
-/* Target the primary button class with !important to ensure override */
-.stButton button[data-testid="baseButton-primary"] {
-    background-color: #C17A49 !important;
-    border-color: #C17A49 !important;
-    color: white !important; /* Ensure text remains white */
-    margin-top: 15px; /* 3. Push the button down so it doesn't clash with the input text */
-}
+# Make the main content area nicely centered and not ultra-wide
+st.markdown(
+    """
+    <style>
+    .block-container {
+        max-width: 1300px;
+        padding-left: 3rem;
+        padding-right: 3rem;
+        margin: auto;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-/* Ensure the button does not get the default Streamlit focus color */
-.stButton button[data-testid="baseButton-primary"]:hover {
-    background-color: #C17A49 !important;
-    border-color: #C17A49 !important;
-}
+# -----------------------------
+# CONSTANTS FOR RETURNS
+# -----------------------------
+NON_HELP_RATE = 0.0847           # 8.47% annualized
+HELP_RATE = NON_HELP_RATE + 0.0332   # +3.32%
 
-/* Adjust general column spacing for a tighter header */
-/* This targets the main content padding, which might affect the header layout */
-.st-emotion-cache-18ni3sq {
-    padding-top: 0rem;
-}
-</style>
-""", unsafe_allow_html=True)
+# -----------------------------
+# SUPABASE CLIENT
+# -----------------------------
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+TABLE_NAME = "submissions"
 
-# ==========================================================
-# HEADER (Logo on Right)
-# ==========================================================
-# Use columns to place elements horizontally. 4 for text, 1 for the logo.
-header_col, logo_col = st.columns([4, 1])
+# -----------------------------
+# LOGO + TOP SPACING
+# -----------------------------
+st.markdown(
+    """
+    <style>
+    .logo-box {
+        padding-top: 25px;
+        padding-bottom: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-with logo_col:
-    # st.image is placed in the right column, forcing the logo to the right
-    st.image("bison_logo.png", width=160)
+with st.container():
+    st.markdown('<div class="logo-box">', unsafe_allow_html=True)
+    st.image("bison_logo.png", width=165)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-with header_col:
-    # The title and subtitle go in the left column
-    st.title("Bison Wealth 401(k) Growth Simulator")
-    st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
-    
-# ==========================================================
-# SUPABASE INIT
-# ==========================================================
-# NOTE: The secrets keys are placeholders/assumed to be available in the execution environment
-SUPABASE_URL = st.secrets.get("SUPABASE_URL", "placeholder_url")
-SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", "placeholder_key")
-
-# Mock Supabase client if secrets are not available
-class MockSupabaseClient:
-    def table(self, table_name):
-        return self
-
-    def insert(self, data):
-        return self
-
-    def execute(self):
-        return None
-
-try:
-    # Only try to create client if keys exist, otherwise use mock
-    if SUPABASE_URL != "placeholder_url" and SUPABASE_KEY != "placeholder_key":
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    else:
-        supabase = MockSupabaseClient()
-except Exception:
-    supabase = MockSupabaseClient()
-
-
-# ==========================================================
-# FINAL, NEVER-TOUCH-AGAIN PROJECTION ENGINE
-# ==========================================================
-DEFAULT_AGE = 42
-DEFAULT_SALARY = 84000
-DEFAULT_BALANCE = 76500
-
-def compute_projection(age, salary, balance):
-
-    # Sanitize inputs fully
-    try:
-        age = int(age)
-    except:
-        age = DEFAULT_AGE
-
-    try:
-        salary = float(salary)
-    except:
-        salary = DEFAULT_SALARY
-
-    try:
-        balance = float(balance)
-    except:
-        balance = DEFAULT_BALANCE
-
-    # Guardrails
-    if age < 18 or age > 90:
-        age = DEFAULT_AGE
-    if salary <= 0:
-        salary = DEFAULT_SALARY
-    if balance < 0:
-        balance = DEFAULT_BALANCE
-
-    # Constants
+# -----------------------------
+# CORE PROJECTION FUNCTION
+# -----------------------------
+def compute_projection(age: int, salary: float, balance: float) -> pd.DataFrame:
     target_age = 65
-    years = max(1, target_age - age)
+    years = max(0, target_age - age)
 
     salary_growth_rate = 0.03
-    contrib_rate = 0.078 + 0.046
-    base_rate = 0.085
-    help_rate = base_rate + 0.0332
+    employee_contrib = 0.078
+    employer_contrib = 0.046
+    contribution_rate = employee_contrib + employer_contrib
 
-    # Salary and contributions
-    salaries = [salary * ((1 + salary_growth_rate)**yr) for yr in range(years)]
-    contribs = [s * contrib_rate for s in salaries]
+    # Salary path
+    salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years + 1)]
+    annual_contribs = [s * contribution_rate for s in salaries]
 
-    # Growth calculation (monthly)
-    def grow(start, contributions, annual_rate):
-        total = start
-        results = []
-        m_rate = (1 + annual_rate)**(1/12) - 1
-        for c in contributions:
+    def growth_projection_monthly(start_balance, annual_contribs, annual_rate):
+        total = start_balance
+        values = [start_balance]
+        monthly_rate = (1 + annual_rate) ** (1 / 12) - 1
+        for yearly_contrib in annual_contribs:
+            monthly_contrib = yearly_contrib / 12
             for _ in range(12):
-                total = total * (1 + m_rate) + c/12
-            results.append(total)
-        return results
+                total = total * (1 + monthly_rate) + monthly_contrib
+            values.append(total)
+        return values
 
-    baseline = grow(balance, contribs, base_rate)
-    help_vals = grow(balance, contribs, help_rate)
+    baseline = growth_projection_monthly(balance, annual_contribs, NON_HELP_RATE)
+    advisor = growth_projection_monthly(balance, annual_contribs, HELP_RATE)
 
-    # Age list
-    ages = list(range(age+1, age+1+len(baseline)))
-
-    # FINAL PROTECTION — truncate to uniform length
-    L = min(len(ages), len(baseline), len(help_vals))
-    ages = ages[:L]
-    baseline = baseline[:L]
-    help_vals = help_vals[:L]
-
-    return pd.DataFrame({
+    ages = list(range(age, target_age + 1))
+    df = pd.DataFrame({
         "Age": ages,
         "Baseline": baseline,
-        "Help": help_vals
+        "Advisor": advisor
     })
+    return df
 
-# Default graph on load
-df_default = compute_projection(DEFAULT_AGE, DEFAULT_SALARY, DEFAULT_BALANCE)
+# -----------------------------
+# DEFAULT INPUTS & DEFAULT CURVE
+# -----------------------------
+default_age = 42
+default_salary = 84_000
+default_balance = 76_500
 
-# ==========================================================
-# USER INPUTS
-# ==========================================================
-left, right = st.columns([1,2])
+df_default = compute_projection(default_age, default_salary, default_balance)
 
-with left:
+# -----------------------------
+# TITLE & INTRO
+# -----------------------------
+st.title("Bison Wealth 401(k) Growth Simulator")
+st.write("Visualize how your 401(k) could grow with and without Bison’s guidance.")
+
+# -----------------------------
+# LAYOUT: LEFT (INPUTS) | RIGHT (CHART)
+# -----------------------------
+col_left, col_right = st.columns([1, 2])
+
+with col_left:
     st.subheader("Your Information")
-    age = st.number_input("Your Age", value=DEFAULT_AGE, min_value=18, max_value=90)
 
-    salary_str = st.text_input("Current Annual Salary ($)", value=f"{DEFAULT_SALARY:,}")
-    balance_str = st.text_input("Current 401(k) Balance ($)", value=f"{DEFAULT_BALANCE:,}")
+    age = st.number_input("Your Age", min_value=18, max_value=65, value=default_age)
+    salary = st.number_input(
+        "Current Annual Salary ($)", min_value=0, value=default_salary,
+        step=1000, format="%d"
+    )
+    balance = st.number_input(
+        "Current 401(k) Balance ($)", min_value=0, value=default_balance,
+        step=1000, format="%d"
+    )
 
     company = st.text_input("Company Name", placeholder="Where do you work?")
-    
-    # This button is now targeted by the CSS to be Bison orange/brown and have extra margin
-    calculate = st.button("Calculate", type="primary")
 
-# Convert numbers
-def parse_money(x):
-    try:
-        return float(x.replace(",", "").strip())
-    except:
-        return None
+    calculate = st.button("Calculate")
 
-salary = parse_money(salary_str)
-balance = parse_money(balance_str)
+with col_right:
+    st.subheader("Estimated 401(k) Growth")
 
-# ==========================================================
-# DETERMINE WHICH DATASET TO SHOW
-# ==========================================================
-if calculate and salary and balance:
-    df = compute_projection(age, salary, balance)
+    # Use default curve until the user clicks Calculate
+    df = df_default.copy()
 
-    # Store in Supabase
-    try:
-        supabase.table("submissions").insert({
+    if calculate:
+        df = compute_projection(age, salary, balance)
+
+        # Quietly store the inputs to Supabase (no extra user messaging)
+        supabase.table(TABLE_NAME).insert({
             "age": age,
             "salary": salary,
             "balance": balance,
-            "company": company if company else "Unknown"
+            "company": company if company else "Unknown",
+            "created_at": datetime.datetime.utcnow().isoformat()
         }).execute()
-    except Exception as e:
-        # Log error but don't stop app
-        pass
 
-else:
-    df = df_default
-
-
-# ==========================================================
-# GRAPH (PLOTLY)
-# ==========================================================
-with right:
-    st.subheader("Estimated 401(k) Growth")
-
+    # -----------------------------
+    # PLOTLY CHART (hover only, no zoom/pan)
+    # -----------------------------
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
-        x=df["Age"], y=df["Baseline"],
-        mode="lines",
-        name="On Your Lonesome (8.5%)",
+        x=df["Age"],
+        y=df["Baseline"],
+        mode="lines+text",
         line=dict(color="#7D7D7D", width=3),
-        hovertemplate="Age %{x}<br>$%{y:,.0f}<extra></extra>"
+        name=f"On Your Lonesome ({NON_HELP_RATE*100:.1f}%)",
+        text=[f"${v:,.0f}" if i == len(df) - 1 else "" for i, v in enumerate(df["Baseline"])],
+        textposition="middle right"
     ))
 
     fig.add_trace(go.Scatter(
-        x=df["Age"], y=df["Help"],
-        mode="lines",
-        name="With Bison by Your Side (11.8%)",
+        x=df["Age"],
+        y=df["Advisor"],
+        mode="lines+text",
         line=dict(color="#25385A", width=4),
-        hovertemplate="Age %{x}<br>$%{y:,.0f}<extra></extra>"
+        name=f"With Bison by Your Side ({HELP_RATE*100:.1f}%)",
+        text=[f"${v:,.0f}" if i == len(df) - 1 else "" for i, v in enumerate(df["Advisor"])],
+        textposition="middle right"
     ))
 
-    # End labels moved above line
-    fig.add_annotation(x=df["Age"].iloc[-1], y=df["Baseline"].iloc[-1] + 20000,
-                       text=f"${df['Baseline'].iloc[-1]:,.0f}",
-                       showarrow=False, font=dict(color="#7D7D7D"))
-
-    fig.add_annotation(x=df["Age"].iloc[-1], y=df["Help"].iloc[-1] + 20000,
-                       text=f"${df['Help'].iloc[-1]:,.0f}",
-                       showarrow=False, font=dict(color="#25385A"))
-
     fig.update_layout(
-        plot_bgcolor="white",
-        paper_bgcolor="white",
+        height=450,
+        margin=dict(l=40, r=40, t=10, b=40),
         hovermode="x unified",
-        xaxis=dict(title="Age", showgrid=False),
-        yaxis=dict(title="Portfolio Value ($)", gridcolor="#E0E0E0"),
-        dragmode=False   # disables zoom & pan
+        xaxis=dict(title="Age", fixedrange=True),
+        yaxis=dict(title="Portfolio Value ($)", fixedrange=True),
+        showlegend=True
     )
 
     st.plotly_chart(fig, use_container_width=True)
-st.markdown("<div style='height:40px;'></div>", unsafe_allow_html=True)
 
-# ==========================================================
-# CTA
-# ==========================================================
-final_difference = df["Help"].iloc[-1] - df["Baseline"].iloc[-1]
+# -----------------------------
+# CTA (DIFFERENCE + BUTTON)
+# -----------------------------
+difference = df["Advisor"].iloc[-1] - df["Baseline"].iloc[-1]
 
-st.markdown(f"""
-<div style='text-align:center; font-size:18px; margin-top:20px;'>
-Is <span style='color:#25385A; font-weight:700;'>${final_difference:,.0f}</span> worth 30 minutes of your time?
-</div>
-""", unsafe_allow_html=True)
+# Some space between chart and text
+st.markdown("<div style='height:25px;'></div>", unsafe_allow_html=True)
+
+st.markdown(
+    f"<h4 style='text-align:center;'>Is <b>${difference:,.0f}</b> worth 30 minutes of your time?</h4>",
+    unsafe_allow_html=True
+)
 
 st.markdown("""
-<div style='text-align:center;'>
-    <a href="https://calendly.com/placeholder-link" target="_blank"
-       style="background-color:#C17A49; color:white; padding:12px 28px;
-              text-decoration:none; border-radius:8px; font-weight:600;">
-       Schedule a Conversation
+<div style="text-align:center; padding-top:10px; padding-bottom:25px;">
+    <a href="https://calendly.com/bisonwealth" target="_blank">
+        <button style="
+            background-color:#C17A49;
+            color:white;
+            padding:14px 32px;
+            border:none;
+            border-radius:8px;
+            font-size:17px;
+            cursor:pointer;">
+            Schedule a Conversation
+        </button>
     </a>
 </div>
 """, unsafe_allow_html=True)
 
+st.markdown("---")
 
-# ==========================================================
-# DISCLOSURE
-# ==========================================================
+# -----------------------------
+# DISCLOSURE (BACK WHERE IT WAS)
+# -----------------------------
 st.caption("""
-For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contributions (7.8% employee, 4.6% employer).  
-Performance without help is the 5yr annualized return of the S&P Target Date 2035 Index (as of 12/04/2025).  
+For illustrative purposes only. Assumes 3% annual salary growth and 12.4% of salary contributed annually
+(7.8% employee, 4.6% employer). Compounded monthly.
+
+Performance without help is the 5yr annualized return of the S&P Target Date 2035 Index as of 12/04/2025.  
 With help is increased by 3.32% based on the Hewitt Study.
 """)
