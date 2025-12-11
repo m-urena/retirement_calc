@@ -229,12 +229,13 @@ final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 
 st.markdown(
     f"""
-    <div style="text-align:center; font-size:18px; margin-top:15px;">
-        Is <b style="color:#25385A;">${final_diff:,.0f}</b> worth 30 minutes of your time?
+    <div style="text-align:center; font-size:26px; margin-top:20px; font-weight:400;">
+        Is <span style="font-weight:700; color:#25385A;">${final_diff:,.0f}</span> worth 30 minutes of your time?
     </div>
     """,
     unsafe_allow_html=True
 )
+
 
 st.markdown(
     """
