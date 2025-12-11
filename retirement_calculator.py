@@ -211,6 +211,7 @@ with right:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+st.markdown("<div style='height:40px;'></div>", unsafe_allow_html=True)
 
 # ==========================================================
 # CTA
