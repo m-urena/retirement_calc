@@ -10,14 +10,26 @@ import os
 # ==========================================================
 st.set_page_config(page_title="Bison 401(k) Simulator", layout="wide")
 
-# CSS setup to change the primary button color to #C17A49
+# CSS to fix button color and add spacing
 st.markdown("""
 <style>
-/* Change the 'primary' button (Calculate) color to match the Schedule button (#C17A49) */
-:root {
-    --primary-color: #C17A49;
+/* 1. FORCE THE CALCULATE BUTTON COLOR TO BISON ORANGE (#C17A49) */
+/* Target the primary button class with !important to ensure override */
+.stButton button[data-testid="baseButton-primary"] {
+    background-color: #C17A49 !important;
+    border-color: #C17A49 !important;
+    color: white !important; /* Ensure text remains white */
+    margin-top: 15px; /* 3. Push the button down so it doesn't clash with the input text */
 }
-/* Reduce margin/padding around the columns for a tighter header */
+
+/* Ensure the button does not get the default Streamlit focus color */
+.stButton button[data-testid="baseButton-primary"]:hover {
+    background-color: #C17A49 !important;
+    border-color: #C17A49 !important;
+}
+
+/* Adjust general column spacing for a tighter header */
+/* This targets the main content padding, which might affect the header layout */
 .st-emotion-cache-18ni3sq {
     padding-top: 0rem;
 }
@@ -27,13 +39,11 @@ st.markdown("""
 # ==========================================================
 # HEADER (Logo on Right)
 # ==========================================================
-# Create two columns: one for the title/subtitle, one for the logo
-# The title column is 4x wider than the logo column.
+# Use columns to place elements horizontally. 4 for text, 1 for the logo.
 header_col, logo_col = st.columns([4, 1])
 
 with logo_col:
     # st.image is placed in the right column, forcing the logo to the right
-    # Note: st.image adds its own padding, which may cause slight vertical offset
     st.image("bison_logo.png", width=160)
 
 with header_col:
@@ -44,11 +54,11 @@ with header_col:
 # ==========================================================
 # SUPABASE INIT
 # ==========================================================
-# NOTE: Using .get for safer access in case secrets are not defined
+# NOTE: The secrets keys are placeholders/assumed to be available in the execution environment
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "placeholder_url")
 SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", "placeholder_key")
 
-# Mock Supabase client if secrets are not available, to allow execution
+# Mock Supabase client if secrets are not available
 class MockSupabaseClient:
     def table(self, table_name):
         return self
@@ -161,7 +171,7 @@ with left:
 
     company = st.text_input("Company Name", placeholder="Where do you work?")
     
-    # This button will now be colored #C17A49 due to the :root CSS variable override
+    # This button is now targeted by the CSS to be Bison orange/brown and have extra margin
     calculate = st.button("Calculate", type="primary")
 
 # Convert numbers
@@ -191,7 +201,6 @@ if calculate and salary and balance:
     except Exception as e:
         # Log error but don't stop app
         pass
-
 
 else:
     df = df_default
