@@ -33,17 +33,17 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 logo_path = os.path.join(os.path.dirname(__file__), "bison_logo.png")
 
 if os.path.exists(logo_path):
+    with open(logo_path, "rb") as f:
+        logo_data = base64.b64encode(f.read()).decode()
+
     st.markdown(
         f"""
-        <div style="width:100%; text-align:right; margin-bottom:10px;">
-            <img src="data:image/png;base64,{base64.b64encode(open(logo_path, "rb").read()).decode()}" 
-                 width="150">
+        <div style="width:100%; text-align:right; margin-top:40px; margin-bottom:10px;">
+            <img src="data:image/png;base64,{logo_data}" width="150">
         </div>
         """,
         unsafe_allow_html=True
     )
-else:
-    st.write("Logo not found:", logo_path)
     
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
