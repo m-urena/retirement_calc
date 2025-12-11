@@ -170,7 +170,7 @@ if calculate and salary_input and balance_input:
     "created_at": datetime.utcnow().isoformat()
 }).execute()
 
-st.write(resp)
+    st.write(resp)
 
 # --------------------------------------------------
 # Compute Projection ONLY from stored values
