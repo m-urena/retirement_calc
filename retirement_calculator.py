@@ -23,7 +23,6 @@ st.set_page_config(
 # --------------------------------------------------
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-st.write("KEY PREFIX:", SUPABASE_KEY[:20])
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY )
 
@@ -174,7 +173,7 @@ if calculate and salary_input and balance_input:
         }).execute()
 
         st.write("SUPABASE INSERT RESPONSE:", resp)
-
+        st.write("KEY PREFIX:", SUPABASE_KEY[:20])
     except Exception as e:
         st.write("INSERT FAILED:")
         st.write(e)
