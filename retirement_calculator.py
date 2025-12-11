@@ -24,7 +24,7 @@ st.set_page_config(
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY  # publishable key works here ONLY if RLS allows public inserts)
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY )
 
 
 # --------------------------------------------------
