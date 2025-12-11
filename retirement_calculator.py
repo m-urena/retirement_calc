@@ -16,6 +16,19 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+    html, body, [class*="css"]  {
+        font-family: 'Montserrat', sans-serif;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 # --------------------------------------------------
 # Supabase Setup
@@ -68,6 +81,10 @@ def compute_projection(age, salary, balance):
     target_age = 65
     if age >= target_age:
         st.warning("Age must be below retirement age to run the projection.")
+        return pd.DataFrame({"age": [age], "baseline": [balance], "with_help": [balance]})
+
+    if salary <= 0:
+        st.warning("Salary must be greater than 0 to run the projection.")
         return pd.DataFrame({"age": [age], "baseline": [balance], "with_help": [balance]})
 
     years = target_age - age
@@ -149,6 +166,7 @@ with left:
             padding-left: 20px !important;
             padding-right: 20px !important;
             border: none !important;
+            font-family: 'Montserrat', sans-serif !important;
         }
         div.stButton > button:first-child:hover {
             background-color: #a76535 !important;
@@ -167,9 +185,11 @@ if calculate:
     if salary_input is None or balance_input is None:
         st.warning("Please enter valid salary and balance numbers before calculating.")
     elif salary_input <= 0:
-        st.warning("Salary must be greater than 0 to run the projection.")
+        st.warning("Salary must be greater than 0 to record a submission.")
     elif balance_input < 0:
         st.warning("Balance cannot be negative.")
+    elif age_input >= 65:
+        st.warning("Age must be below retirement age to record a submission.")
     else:
 
         st.session_state.age_used = age_input
@@ -249,6 +269,7 @@ with right:
         margin=dict(l=20, r=20, t=20, b=40),
         plot_bgcolor="white",
         paper_bgcolor="white",
+        font=dict(family="Montserrat, sans-serif"),
         xaxis=dict(title="Age", fixedrange=True, gridcolor="#E0E0E0"),
         yaxis=dict(title="Portfolio Value ($)", fixedrange=True, gridcolor="#E0E0E0"),
         hovermode="x unified"
