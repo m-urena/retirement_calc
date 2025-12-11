@@ -23,13 +23,18 @@ st.markdown("""
 
 logo_path = "./bison_logo.png"  # safest path for Streamlit Cloud
 
-col1, col2 = st.columns([4, 1])  # adjust spacing as needed
+st.markdown("""
+    <style>
+    .bison-logo {
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-with col2:
-    if os.path.exists(logo_path):
-        st.image(logo_path, use_column_width=True)
-    else:
-        st.warning("Logo missing.")
+st.markdown('<div class="bison-logo">', unsafe_allow_html=True)
+st.image("bison_logo.png", width=160)
+st.markdown("</div>", unsafe_allow_html=True)
 
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
