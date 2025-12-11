@@ -25,8 +25,8 @@ SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]   # MUST be the secret key
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-----------------------------------------
-# Logo
+#----------------------------------------
+#Logo
 # --------------------------------------------------
 
 logo_path = os.path.join(os.path.dirname(__file__), "bison_logo.png")
