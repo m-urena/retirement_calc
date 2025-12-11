@@ -1,245 +1,182 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 from supabase import create_client
-import os
+import datetime
 
-# ==========================================================
-# PAGE SETUP
-# ==========================================================
-st.set_page_config(page_title="Bison 401(k) Simulator", layout="wide")
+# -----------------------------
+# CONFIGURE PAGE
+# -----------------------------
+st.set_page_config(
+    page_title="Bison Wealth 401(k) Growth Simulator",
+    layout="wide"
+)
 
-# CSS to move logo to the RIGHT
-st.markdown("""
-<style>
-.logo-container {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: -30px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-logo_path = "./bison_logo.png"  # safest path for Streamlit Cloud
-
+# -----------------------------
+# LOAD LOGO WITH POLISHED STYLING
+# -----------------------------
 st.markdown("""
     <style>
-    .bison-logo {
-        padding-top: 20px;
-        padding-bottom: 20px;
-    }
+        .logo-box {
+            padding-top: 25px;
+            padding-bottom: 15px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="bison-logo">', unsafe_allow_html=True)
-st.image("bison_logo.png", width=160)
-st.markdown("</div>", unsafe_allow_html=True)
+with st.container():
+    st.markdown('<div class="logo-box">', unsafe_allow_html=True)
+    st.image("bison_logo.png", width=165)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-st.title("Bison Wealth 401(k) Growth Simulator")
-st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
+# -----------------------------
+# SUPABASE SETUP
+# -----------------------------
+url = st.secrets["SUPABASE_URL"]
+key = st.secrets["SUPABASE_KEY"]
+supabase = create_client(url, key)
 
-# ==========================================================
-# SUPABASE INIT
-# ==========================================================
-SUPABASE_URL = st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+TABLE_NAME = "submissions"
 
-# ==========================================================
-# FINAL, NEVER-TOUCH-AGAIN PROJECTION ENGINE
-# ==========================================================
-DEFAULT_AGE = 42
-DEFAULT_SALARY = 84000
-DEFAULT_BALANCE = 76500
-
+# -----------------------------
+# COMPUTATION FUNCTION
+# -----------------------------
 def compute_projection(age, salary, balance):
+    years = list(range(age, 66))
+    baseline_growth = []
+    advisor_growth = []
 
-    # Sanitize inputs fully
-    try:
-        age = int(age)
-    except:
-        age = DEFAULT_AGE
+    bal_base = balance
+    bal_adv = balance
 
-    try:
-        salary = float(salary)
-    except:
-        salary = DEFAULT_SALARY
-
-    try:
-        balance = float(balance)
-    except:
-        balance = DEFAULT_BALANCE
-
-    # Guardrails
-    if age < 18 or age > 90:
-        age = DEFAULT_AGE
-    if salary <= 0:
-        salary = DEFAULT_SALARY
-    if balance < 0:
-        balance = DEFAULT_BALANCE
-
-    # Constants
-    target_age = 65
-    years = max(1, target_age - age)
-
-    salary_growth_rate = 0.03
-    contrib_rate = 0.078 + 0.046
-    base_rate = 0.085
-    help_rate = base_rate + 0.0332
-
-    # Salary and contributions
-    salaries = [salary * ((1 + salary_growth_rate)**yr) for yr in range(years)]
-    contribs = [s * contrib_rate for s in salaries]
-
-    # Growth calculation (monthly)
-    def grow(start, contributions, annual_rate):
-        total = start
-        results = []
-        m_rate = (1 + annual_rate)**(1/12) - 1
-        for c in contributions:
-            for _ in range(12):
-                total = total * (1 + m_rate) + c/12
-            results.append(total)
-        return results
-
-    baseline = grow(balance, contribs, base_rate)
-    help_vals = grow(balance, contribs, help_rate)
-
-    # Age list
-    ages = list(range(age+1, age+1+len(baseline)))
-
-    # FINAL PROTECTION — truncate to uniform length
-    L = min(len(ages), len(baseline), len(help_vals))
-    ages = ages[:L]
-    baseline = baseline[:L]
-    help_vals = help_vals[:L]
+    for year in years:
+        bal_base = bal_base * 1.085 + salary * 0.12
+        bal_adv = bal_adv * 1.118 + salary * 0.12
+        baseline_growth.append(bal_base)
+        advisor_growth.append(bal_adv)
 
     return pd.DataFrame({
-        "Age": ages,
-        "Baseline": baseline,
-        "Help": help_vals
+        "Age": years,
+        "Baseline": baseline_growth,
+        "Advisor": advisor_growth
     })
 
-# Default graph on load
-df_default = compute_projection(DEFAULT_AGE, DEFAULT_SALARY, DEFAULT_BALANCE)
+# -----------------------------
+# DEFAULT VALUES
+# -----------------------------
+default_age = 42
+default_salary = 84000
+default_balance = 76500
 
-# ==========================================================
-# USER INPUTS
-# ==========================================================
-left, right = st.columns([1,2])
+df_default = compute_projection(default_age, default_salary, default_balance)
 
-with left:
+# -----------------------------
+# PAGE TITLE
+# -----------------------------
+st.title("Bison Wealth 401(k) Growth Simulator")
+st.write("Visualize how your 401(k) could grow with and without Bison’s guidance.")
+
+# -----------------------------
+# LAYOUT: INPUTS | GRAPH
+# -----------------------------
+col_left, col_right = st.columns([1, 2])
+
+with col_left:
     st.subheader("Your Information")
-    age = st.number_input("Your Age", value=DEFAULT_AGE, min_value=18, max_value=90)
 
-    salary_str = st.text_input("Current Annual Salary ($)", value=f"{DEFAULT_SALARY:,}")
-    balance_str = st.text_input("Current 401(k) Balance ($)", value=f"{DEFAULT_BALANCE:,}")
+    age = st.number_input("Your Age", min_value=18, max_value=65, value=default_age)
+    salary = st.number_input("Current Annual Salary ($)", min_value=0, value=default_salary, step=1000, format="%d")
+    balance = st.number_input("Current 401(k) Balance ($)", min_value=0, value=default_balance, step=1000, format="%d")
 
     company = st.text_input("Company Name", placeholder="Where do you work?")
-    
-    calculate = st.button("Calculate", type="primary")
 
-# Convert numbers
-def parse_money(x):
-    try:
-        return float(x.replace(",", "").strip())
-    except:
-        return None
+    calculate = st.button("Calculate")
 
-salary = parse_money(salary_str)
-balance = parse_money(balance_str)
-
-# ==========================================================
-# DETERMINE WHICH DATASET TO SHOW
-# ==========================================================
-if calculate and salary and balance:
-    df = compute_projection(age, salary, balance)
-
-    # Store in Supabase
-    supabase.table("submissions").insert({
-        "age": age,
-        "salary": salary,
-        "balance": balance,
-        "company": company if company else "Unknown"
-    }).execute()
-
-else:
-    df = df_default
-
-
-# ==========================================================
-# GRAPH (PLOTLY)
-# ==========================================================
-with right:
+with col_right:
     st.subheader("Estimated 401(k) Growth")
 
+    # The graph uses default values until Calculate is pressed
+    df = df_default.copy()
+
+    if calculate:
+        df = compute_projection(age, salary, balance)
+
+        # Store submission (clean — no IP, no UA)
+        supabase.table(TABLE_NAME).insert({
+            "age": age,
+            "salary": salary,
+            "balance": balance,
+            "company": company if company else "Unknown",
+            "created_at": datetime.datetime.utcnow().isoformat()
+        }).execute()
+
+    # -----------------------------
+    # PLOTLY GRAPH (no zoom/pan)
+    # -----------------------------
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
         x=df["Age"], y=df["Baseline"],
-        mode="lines",
-        name="On Your Lonesome (8.5%)",
-        line=dict(color="#7D7D7D", width=3),
-        hovertemplate="Age %{x}<br>$%{y:,.0f}<extra></extra>"
+        mode="lines+text",
+        text=[f"${v:,.0f}" if i == len(df)-1 else "" for i, v in enumerate(df["Baseline"])],
+        textposition="middle right",
+        line=dict(color="#7f7f7f", width=3),
+        name="On Your Lonesome (8.5%)"
     ))
 
     fig.add_trace(go.Scatter(
-        x=df["Age"], y=df["Help"],
-        mode="lines",
-        name="With Bison by Your Side (11.8%)",
-        line=dict(color="#25385A", width=4),
-        hovertemplate="Age %{x}<br>$%{y:,.0f}<extra></extra>"
+        x=df["Age"], y=df["Advisor"],
+        mode="lines+text",
+        text=[f"${v:,.0f}" if i == len(df)-1 else "" for i, v in enumerate(df["Advisor"])],
+        textposition="middle right",
+        line=dict(color="#25385a", width=4),
+        name="With Bison by Your Side (11.8%)"
     ))
 
-    # End labels moved above line
-    fig.add_annotation(x=df["Age"].iloc[-1], y=df["Baseline"].iloc[-1] + 20000,
-                       text=f"${df['Baseline'].iloc[-1]:,.0f}",
-                       showarrow=False, font=dict(color="#7D7D7D"))
-
-    fig.add_annotation(x=df["Age"].iloc[-1], y=df["Help"].iloc[-1] + 20000,
-                       text=f"${df['Help'].iloc[-1]:,.0f}",
-                       showarrow=False, font=dict(color="#25385A"))
-
     fig.update_layout(
-        plot_bgcolor="white",
-        paper_bgcolor="white",
+        height=450,
+        margin=dict(l=40, r=40, t=10, b=40),
         hovermode="x unified",
-        xaxis=dict(title="Age", showgrid=False),
-        yaxis=dict(title="Portfolio Value ($)", gridcolor="#E0E0E0"),
-        dragmode=False   # disables zoom & pan
+        xaxis=dict(title="Age", fixedrange=True),
+        yaxis=dict(title="Portfolio Value ($)", fixedrange=True),
+        showlegend=True
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+# -----------------------------
+# SPACING BEFORE CTA
+# -----------------------------
 st.markdown("<div style='height:40px;'></div>", unsafe_allow_html=True)
 
-# ==========================================================
-# CTA
-# ==========================================================
-final_difference = df["Help"].iloc[-1] - df["Baseline"].iloc[-1]
+# -----------------------------
+# CTA SECTION
+# -----------------------------
+difference = df["Advisor"].iloc[-1] - df["Baseline"].iloc[-1]
 
-st.markdown(f"""
-<div style='text-align:center; font-size:18px; margin-top:20px;'>
-Is <span style='color:#25385A; font-weight:700;'>${final_difference:,.0f}</span> worth 30 minutes of your time?
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    f"<h4 style='text-align:center;'>Is <b>${difference:,.0f}</b> worth 30 minutes of your time?</h4>",
+    unsafe_allow_html=True
+)
 
 st.markdown("""
-<div style='text-align:center;'>
-    <a href="https://calendly.com/placeholder-link" target="_blank"
-       style="background-color:#C17A49; color:white; padding:12px 28px;
-              text-decoration:none; border-radius:8px; font-weight:600;">
-       Schedule a Conversation
+<div style="text-align:center; padding-top:10px; padding-bottom:35px;">
+    <a href="https://calendly.com/bisonwealth" target="_blank">
+        <button style="
+            background-color:#C17A49;
+            color:white;
+            padding:14px 32px;
+            border:none;
+            border-radius:8px;
+            font-size:17px;
+            cursor:pointer;">
+            Schedule a Conversation
+        </button>
     </a>
 </div>
 """, unsafe_allow_html=True)
 
-
-# ==========================================================
-# DISCLOSURE
-# ==========================================================
-st.caption("""
-For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contributions (7.8% employee, 4.6% employer).  
-Performance without help is the 5yr annualized return of the S&P Target Date 2035 Index (as of 12/04/2025).  
-With help is increased by 3.32% based on the Hewitt Study.
-""")
+# -----------------------------
+# FOOTER SPACING
+# -----------------------------
+st.markdown("<div style='height:30px;'></div>", unsafe_allow_html=True)
