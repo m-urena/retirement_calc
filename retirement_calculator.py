@@ -28,7 +28,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # --------------------------------------------------
 # Logo
 # --------------------------------------------------
-logo_path = "Bison_Wealth_Logo.png"
+logo_path = "bison_logo.png"
 if os.path.exists(logo_path):
     st.image(logo_path, width=150)
 
