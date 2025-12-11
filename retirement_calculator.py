@@ -30,7 +30,13 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # --------------------------------------------------
 logo_path = "bison_logo.png"
 if os.path.exists(logo_path):
-    st.image(logo_path, width=150)
+    st.markdown("""
+    <div style="display:flex; justify-content:flex-end; align-items:center;">
+        <img src="https://raw.githubusercontent.com/your_path/Bison%20Wealth%20Logo.png" 
+             style="width:180px; margin-top:20px;">
+    </div>
+""", unsafe_allow_html=True)
+
 
 
 st.title("Bison Wealth 401(k) Growth Simulator")
