@@ -37,7 +37,7 @@ st.markdown(
     f"""
     <div style="
         position: absolute;
-        top: 80px;       /* move the logo down (increase this number to go lower) */
+        top: 70px;       /* move the logo down (increase this number to go lower) */
         right: 40px;     /* move logo left or right */
         z-index: 999;
     ">
