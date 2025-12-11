@@ -34,12 +34,15 @@ logo_path = os.path.join(os.path.dirname(__file__), "bison_logo.png")
 if os.path.exists(logo_path):
     st.markdown(
         f"""
-        <div style="display:flex; justify-content:flex-end;">
-            <img src="{logo_path}" width="150">
+        <div style="width:100%; text-align:right; margin-bottom:10px;">
+            <img src="data:image/png;base64,{base64.b64encode(open(logo_path, "rb").read()).decode()}" 
+                 width="150">
         </div>
         """,
         unsafe_allow_html=True
     )
+else:
+    st.write("Logo not found:", logo_path)
     
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
