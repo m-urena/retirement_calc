@@ -32,7 +32,7 @@ logo_path = "bison_logo.png"
 if os.path.exists(logo_path):
     st.markdown("""
     <div style="display:flex; justify-content:flex-end; align-items:center;">
-        <img src="https://raw.githubusercontent.com/your_path/Bison%20Wealth%20Logo.png" 
+        <img src="https://raw.githubusercontent.com/your_path/bison%20logo.png" 
              style="width:180px; margin-top:20px;">
     </div>
 """, unsafe_allow_html=True)
