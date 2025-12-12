@@ -15,6 +15,17 @@ st.set_page_config(
     page_icon="🦬",
     layout="wide"
 )
+is_dark_mode = st.get_option("theme.base") == "dark"
+if is_dark_mode:
+    plot_bg = "#0E1117"
+    paper_bg = "#0E1117"
+    grid_color = "#2A2A2A"
+    axis_color = "#E6E6E6"
+else:
+    plot_bg = "white"
+    paper_bg = "white"
+    grid_color = "#E0E0E0"
+    axis_color = "#000000"
 
 st.markdown(
     """
@@ -319,11 +330,29 @@ with right:
     fig.update_layout(
         height=450,
         margin=dict(l=20, r=20, t=20, b=40),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        font=dict(family="Montserrat"),
-        xaxis=dict(title="Age", fixedrange=True),
-        yaxis=dict(title="Portfolio Value ($)", fixedrange=True),
+        plot_bgcolor=plot_bg,
+        paper_bgcolor=paper_bg,
+        font=dict(
+            family="Montserrat, sans-serif",
+            color=axis_color
+        ),
+        xaxis=dict(
+            title="Age",
+            fixedrange=True,
+            gridcolor=grid_color,
+            tickfont=dict(color=axis_color),
+            titlefont=dict(color=axis_color)
+        ),
+        yaxis=dict(
+            title="Portfolio Value ($)",
+            fixedrange=True,
+            gridcolor=grid_color,
+            tickfont=dict(color=axis_color),
+            titlefont=dict(color=axis_color)
+        ),
+        legend=dict(
+            font=dict(color=axis_color)
+        ),
         hovermode="x unified",
         dragmode=False
     )
