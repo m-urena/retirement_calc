@@ -221,35 +221,21 @@ with left:
 # --------------------------------------------------
 # Handle Calculate
 # --------------------------------------------------
-if (
-    calculate
-    and salary_input
-    and balance_input
-    and age_input < 65
-    and company
-):
+if (calculate and salary_input and balance_input and age_input < 65 and company):
     st.session_state.age_used = age_input
     st.session_state.salary_used = salary_input
     st.session_state.balance_used = balance_input
 
     try:
-        resp = supabase.table("submissions").insert({
+        supabase.table("submissions").insert({
             "age": age_input,
             "salary": salary_input,
             "balance": balance_input,
             "company": company,
-            "raw_company_input": raw_company_input,
             "created_at": datetime.utcnow().isoformat()
         }).execute()
-
-        st.write("SUPABASE INSERT RESPONSE:")
-        st.write(resp)
-
-    except Exception as e:
-        st.error("SUPABASE ERROR:")
-        st.error(e)
-
-
+    except Exception:
+        pass
 # --------------------------------------------------
 # Compute Projection
 # --------------------------------------------------
