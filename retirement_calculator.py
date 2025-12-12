@@ -378,7 +378,7 @@ final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 st.markdown(
     f"""
     <div style="text-align:center; font-size:26px; margin-top:20px;">
-        Is <span style="font-weight:700; color:{help_color};">
+        Is <span style="font-weight:700; color:{diff_color};">
         ${final_diff:,.0f}</span> worth 30 minutes of your time?
     </div>
     """,
