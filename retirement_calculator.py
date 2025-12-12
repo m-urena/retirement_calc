@@ -49,6 +49,7 @@ if is_dark_mode:
     axis_color = "#FFFFFF"
     baseline_color = "#9CA3AF"  # neutral gray for "without help"
     help_color = "#C17A49"      # branded orange for "with help"
+    plot_template = "plotly_dark"
 else:
     plot_bg = "white"
     paper_bg = "white"
@@ -56,6 +57,7 @@ else:
     axis_color = "#000000"
     baseline_color = "#7D7D7D"
     help_color = "#C17A49"
+    plot_template = "plotly_white"
 
 # --------------------------------------------------
 # Global CSS
