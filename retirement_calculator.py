@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 from datetime import datetime
 from supabase import create_client, Client
 import os
+from pathlib import Path
 import base64
 
 
@@ -17,6 +17,19 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+    html, body, [class*="css"]  {
+        font-family: 'Montserrat', sans-serif;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 # --------------------------------------------------
 # Supabase Setup
@@ -25,12 +38,60 @@ SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]   # MUST be the secret key
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
+# --------------------------------------------------
+# Company data setup
+# --------------------------------------------------
+DATA_DIR = Path(__file__).resolve().parent / "Data"
+COMPANY_FILE_PREFIX = "AL - ID Skip GA"
+
+
+@st.cache_data(show_spinner=False)
+def load_company_names():
+    """Load plan sponsor names from the provided data file.
+
+    Supports CSV or Excel files with a filename starting with the
+    COMPANY_FILE_PREFIX. Returns a sorted list with the fallback
+    "My Company Is Not Listed" first.
+    """
+
+    fallback = ["My Company Is Not Listed"]
+    matches = sorted(DATA_DIR.glob(f"{COMPANY_FILE_PREFIX}*"))
+    if not matches:
+        return fallback
+
+    data_path = matches[0]
+    try:
+        if data_path.suffix.lower() == ".csv":
+            df = pd.read_csv(data_path)
+        else:
+            df = pd.read_excel(data_path)
+    except Exception:
+        return fallback
+
+    col_name = "Plan sponsor's name"
+    if col_name not in df.columns:
+        return fallback
+
+    names = (
+        df[col_name]
+        .dropna()
+        .astype(str)
+        .map(lambda x: x.strip())
+        .loc[lambda s: s != ""]
+        .map(lambda x: x.title())
+    )
+
+    unique_sorted = sorted(set(names))
+    return fallback + unique_sorted
 #----------------------------------------
 #Logo
 # --------------------------------------------------
 
 logo_path = os.path.join(os.path.dirname(__file__), "bison_logo.png")
-logo_b64 = base64.b64encode(open(logo_path, "rb").read()).decode()
+with open(logo_path, "rb") as logo_file:
+    logo_b64 = base64.b64encode(logo_file.read()).decode()
  
 st.markdown(
     f"""
@@ -56,16 +117,24 @@ st.write("Visualize how your 401(k) could grow **with and without Bison’s guid
 def parse_number(x):
     try:
         return float(x.replace(",", "").strip())
-    except:
+    except (TypeError, ValueError):
         return None
 
 
 # --------------------------------------------------
 # Projection Calculation Function
 # --------------------------------------------------
+@st.cache_data(show_spinner=False)
 def compute_projection(age, salary, balance):
-
     target_age = 65
+    if age >= target_age:
+        st.warning("Age must be below retirement age to run the projection.")
+        return pd.DataFrame({"age": [age], "baseline": [balance], "with_help": [balance]})
+
+    if salary <= 0:
+        st.warning("Salary must be greater than 0 to run the projection.")
+        return pd.DataFrame({"age": [age], "baseline": [balance], "with_help": [balance]})
+
     years = target_age - age
     num_points = years + 1
 
@@ -83,10 +152,13 @@ def compute_projection(age, salary, balance):
         out = [start]
         monthly_rate = (1 + rate) ** (1/12) - 1
 
+        # Closed-form monthly contribution compounding to avoid inner loops
+        monthly_factor = (1 + monthly_rate) ** 12
+        contrib_multiplier = (monthly_factor - 1) / monthly_rate
+
         for yearly in contribs:
             monthly_contrib = yearly / 12
-            for _ in range(12):
-                total = total * (1 + monthly_rate) + monthly_contrib
+            total = total * monthly_factor + monthly_contrib * contrib_multiplier
             out.append(total)
 
         return out[:num_points]
@@ -123,10 +195,18 @@ with left:
 
     st.subheader("Your Information")
 
+    company_options = load_company_names()
+
     age_input = st.number_input("Your Age", min_value=18, max_value=100, value=42)
     salary_str = st.text_input("Current Annual Salary ($)", value="84,000")
     balance_str = st.text_input("Current 401(k) Balance ($)", value="76,500")
-    company = st.text_input("Company Name", placeholder="Where do you work?")
+    company = st.selectbox(
+        "Company Name",
+        company_options,
+        index=0,
+        placeholder="Start typing to search your company",
+    )
+    company_selection = company or "My Company Is Not Listed"
 
     salary_input = parse_number(salary_str)
     balance_input = parse_number(balance_str)
@@ -142,6 +222,7 @@ with left:
             padding-left: 20px !important;
             padding-right: 20px !important;
             border: none !important;
+            font-family: 'Montserrat', sans-serif !important;
         }
         div.stButton > button:first-child:hover {
             background-color: #a76535 !important;
@@ -155,19 +236,30 @@ with left:
 # --------------------------------------------------
 # When user clicks Calculate → freeze values & insert
 # --------------------------------------------------
-if calculate and salary_input and balance_input:
+if calculate:
 
-    st.session_state.age_used = age_input
-    st.session_state.salary_used = salary_input
-    st.session_state.balance_used = balance_input
+    if salary_input is None or balance_input is None:
+        st.warning("Please enter valid salary and balance numbers before calculating.")
+    elif salary_input <= 0:
+        st.warning("Salary must be greater than 0 to record a submission.")
+    elif balance_input < 0:
+        st.warning("Balance cannot be negative.")
+    elif age_input >= 65:
+        st.warning("Age must be below retirement age to record a submission.")
+    else:
 
-    resp = supabase.table("submissions").insert({
-        "age": age_input,
-        "salary": salary_input,
-        "balance": balance_input,
-        "company": company.strip() if company.strip() else "Unknown",
-        "created_at": datetime.utcnow().isoformat()
-    }).execute()
+        st.session_state.age_used = age_input
+        st.session_state.salary_used = salary_input
+        st.session_state.balance_used = balance_input
+        company_value = company_selection
+
+        supabase.table("submissions").insert({
+            "age": age_input,
+            "salary": salary_input,
+            "balance": balance_input,
+            "company": company_value,
+            "created_at": datetime.utcnow().isoformat()
+        }).execute()
 
 # --------------------------------------------------
 # Compute Projection ONLY from stored values
@@ -234,6 +326,7 @@ with right:
         margin=dict(l=20, r=20, t=20, b=40),
         plot_bgcolor="white",
         paper_bgcolor="white",
+        font=dict(family="Montserrat, sans-serif"),
         xaxis=dict(title="Age", fixedrange=True, gridcolor="#E0E0E0"),
         yaxis=dict(title="Portfolio Value ($)", fixedrange=True, gridcolor="#E0E0E0"),
         hovermode="x unified"
@@ -262,17 +355,28 @@ st.markdown(
 )
 
 
+# Determine Calendly link based on company selection
+DEFAULT_CALENDLY = "https://calendly.com/placeholder"
+ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
+
+normalized_company = company_selection.strip().lower()
+calendly_link = (
+    ALT_CALENDLY
+    if normalized_company == "my company is not listed".lower()
+    else DEFAULT_CALENDLY
+)
+
 st.markdown(
     """
     <div style="text-align:center; margin-top:20px;">
-        <a href="https://calendly.com/placeholder" target="_blank"
+        <a href="{calendly_link}" target="_blank"
            style="background-color:#C17A49; color:white; padding:14px 28px;
                   text-decoration:none; border-radius:8px; font-size:18px;">
            Schedule a Conversation
         </a>
     </div>
-    """,
-    unsafe_allow_html=True
+    """.format(calendly_link=calendly_link),
+    unsafe_allow_html=True,
 )
 
 
