@@ -163,28 +163,22 @@ with left:
 
     company_list = load_company_names()
 
-    company_search = st.text_input(
+    company_input = st.combobox(
         "Company Name",
-        placeholder="Type at least 3 characters"
+        options=company_list,
+        placeholder="Type your company's name"
     )
 
     company = None
+    raw_company_input = company_input.strip() if company_input else ""
 
-    if len(company_search.strip()) >= 3:
-        matches = [
-            c for c in company_list
-            if company_search.lower() in c.lower()
-        ]
-
-        if matches:
-            company = st.selectbox(
-                "Select your company",
-                matches,
-                key="company_select"
-            )
+    if raw_company_input:
+        if len(raw_company_input) < 3:
+            company = None
+        elif raw_company_input in company_list:
+            company = raw_company_input
         else:
             company = "My Company Is Not Listed"
-            st.info("No matching company found. Set to *My Company Is Not Listed*.")
 
     st.markdown(
         """
@@ -224,6 +218,7 @@ if (
         "salary": salary_input,
         "balance": balance_input,
         "company": company,
+        "raw_company_input": raw_company_input,
         "created_at": datetime.utcnow().isoformat()
     }).execute()
 
