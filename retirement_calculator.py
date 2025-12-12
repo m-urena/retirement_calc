@@ -18,7 +18,29 @@ st.set_page_config(
 # --------------------------------------------------
 # Dark mode detection + colors
 # --------------------------------------------------
-is_dark_mode = st.get_option("theme.base") == "dark"
+def _hex_to_rgb(hex_color: str):
+    hex_color = hex_color.lstrip("#")
+    if len(hex_color) == 3:
+        hex_color = "".join([c * 2 for c in hex_color])
+    return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _is_dark_background(color: str | None) -> bool:
+    if not color:
+        return False
+    try:
+        r, g, b = _hex_to_rgb(color)
+        # relative luminance
+        luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+        return luminance < 0.5
+    except Exception:
+        return False
+
+
+theme_base = st.get_option("theme.base")
+theme_background = st.get_option("theme.backgroundColor")
+
+is_dark_mode = theme_base == "dark" or _is_dark_background(theme_background)
 
 if is_dark_mode:
     plot_bg = "#000000"
@@ -317,6 +339,7 @@ with right:
         margin=dict(l=20, r=20, t=20, b=40),
         plot_bgcolor=plot_bg,
         paper_bgcolor=paper_bg,
+        template=plot_template,
         font=dict(
             family="Montserrat",
             color=axis_color
