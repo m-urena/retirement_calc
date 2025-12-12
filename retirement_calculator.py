@@ -251,13 +251,12 @@ if calculate:
         st.session_state.age_used = age_input
         st.session_state.salary_used = salary_input
         st.session_state.balance_used = balance_input
-        company_value = company_selection
 
         supabase.table("submissions").insert({
             "age": age_input,
             "salary": salary_input,
             "balance": balance_input,
-            "company": company_value,
+            "company": company.strip() if company.strip() else "Unknown",
             "created_at": datetime.utcnow().isoformat()
         }).execute()
 
@@ -359,7 +358,7 @@ st.markdown(
 DEFAULT_CALENDLY = "https://calendly.com/placeholder"
 ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
 
-normalized_company = company_selection.strip().lower()
+normalized_company = company.strip().lower()
 calendly_link = (
     ALT_CALENDLY
     if normalized_company == "my company is not listed".lower()
