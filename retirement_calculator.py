@@ -57,7 +57,7 @@ else:
     grid_color = "#E0E0E0"
     axis_color = "#000000"
     baseline_color = "#7D7D7D"
-    help_color = "#2B6CB0"      # blue accent for light mode
+    help_color = "#263759"      # blue accent for light mode
     diff_color = help_color
     plot_template = "plotly_white"
 
