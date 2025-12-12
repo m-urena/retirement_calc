@@ -31,9 +31,27 @@ st.markdown(
 # --------------------------------------------------
 # Supabase Setup
 # --------------------------------------------------
-SUPABASE_URL = st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+def get_secret(key):
+    try:
+        return st.secrets[key]
+    except Exception:
+        return None
+
+
+def create_supabase_client():
+    url = get_secret("SUPABASE_URL")
+    key = get_secret("SUPABASE_KEY")
+
+    if not url or not key:
+        return None
+
+    try:
+        return create_client(url, key)
+    except Exception:
+        return None
+
+
+supabase: Client | None = create_supabase_client()
 
 # --------------------------------------------------
 # Load Company Names
@@ -214,14 +232,18 @@ if (
     st.session_state.salary_used = salary_input
     st.session_state.balance_used = balance_input
 
-    supabase.table("submissions").insert({
-        "age": age_input,
-        "salary": salary_input,
-        "balance": balance_input,
-        "company": company,
-        "raw_company_input": raw_company_input,
-        "created_at": datetime.utcnow().isoformat()
-    }).execute()
+    if supabase:
+        try:
+            supabase.table("submissions").insert({
+                "age": age_input,
+                "salary": salary_input,
+                "balance": balance_input,
+                "company": company,
+                "raw_company_input": raw_company_input,
+                "created_at": datetime.utcnow().isoformat()
+            }).execute()
+        except Exception:
+            pass
 
 # --------------------------------------------------
 # Compute Projection
@@ -256,19 +278,57 @@ with right:
         line=dict(color="#25385A", width=4)
     ))
 
+    final_age = df["age"].iloc[-1]
+    baseline_final = df["baseline"].iloc[-1]
+    with_help_final = df["with_help"].iloc[-1]
+
+    fig.add_trace(go.Scatter(
+        x=[final_age],
+        y=[baseline_final],
+        mode="markers+text",
+        text=[f"${baseline_final:,.0f}"],
+        textposition="bottom right",
+        textfont=dict(color="#7D7D7D", size=12),
+        marker=dict(color="#7D7D7D", size=10),
+        showlegend=False,
+        hoverinfo="text",
+        name="On Your Lonesome Final"
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=[final_age],
+        y=[with_help_final],
+        mode="markers+text",
+        text=[f"${with_help_final:,.0f}"],
+        textposition="top left",
+        textfont=dict(color="#25385A", size=12, family="Montserrat"),
+        marker=dict(color="#25385A", size=10),
+        showlegend=False,
+        hoverinfo="text",
+        name="With Bison by Your Side Final"
+    ))
+
     fig.update_layout(
         height=450,
         margin=dict(l=20, r=20, t=20, b=40),
         plot_bgcolor="white",
         paper_bgcolor="white",
         font=dict(family="Montserrat"),
-        xaxis=dict(title="Age"),
-        yaxis=dict(title="Portfolio Value ($)"),
+        xaxis=dict(title="Age", fixedrange=True),
+        yaxis=dict(title="Portfolio Value ($)", fixedrange=True),
         hovermode="x unified",
         dragmode=False
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={
+            "scrollZoom": False,
+            "doubleClick": False,
+            "displayModeBar": False
+        }
+    )
 
 # --------------------------------------------------
 # CTA + Calendly Button
