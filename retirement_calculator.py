@@ -232,18 +232,23 @@ if (
     st.session_state.salary_used = salary_input
     st.session_state.balance_used = balance_input
 
-    if supabase:
-        try:
-            supabase.table("submissions").insert({
-                "age": age_input,
-                "salary": salary_input,
-                "balance": balance_input,
-                "company": company,
-                "raw_company_input": raw_company_input,
-                "created_at": datetime.utcnow().isoformat()
-            }).execute()
-        except Exception:
-            pass
+    try:
+        resp = supabase.table("submissions").insert({
+            "age": age_input,
+            "salary": salary_input,
+            "balance": balance_input,
+            "company": company,
+            "raw_company_input": raw_company_input,
+            "created_at": datetime.utcnow().isoformat()
+        }).execute()
+
+        st.write("SUPABASE INSERT RESPONSE:")
+        st.write(resp)
+
+    except Exception as e:
+        st.error("SUPABASE ERROR:")
+        st.error(e)
+
 
 # --------------------------------------------------
 # Compute Projection
