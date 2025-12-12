@@ -36,7 +36,7 @@ SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # --------------------------------------------------
-# Load Company Names
+# Load Company Names (CSV)
 # --------------------------------------------------
 @st.cache_data(show_spinner=False)
 def load_company_names():
@@ -65,7 +65,7 @@ def load_company_names():
 # --------------------------------------------------
 # Logo
 # --------------------------------------------------
-logo_path = os.path.join(os.path.dirname(__file__), "bison_logo.png")
+logo_path = Path(__file__).resolve().parent / "bison_logo.png"
 with open(logo_path, "rb") as f:
     logo_b64 = base64.b64encode(f.read()).decode()
 
@@ -163,22 +163,24 @@ with left:
 
     company_list = load_company_names()
 
-    company_input = st.combobox(
+    company_input = st.selectbox(
         "Company Name",
         options=company_list,
-        placeholder="Type your company's name"
+        index=None,
+        placeholder="Type your company's name",
+        accept_new_options=True
     )
 
     company = None
     raw_company_input = company_input.strip() if company_input else ""
 
     if raw_company_input:
-        if len(raw_company_input) < 3:
-            company = None
-        elif raw_company_input in company_list:
-            company = raw_company_input
-        else:
-            company = "My Company Is Not Listed"
+        if len(raw_company_input) >= 3:
+            normalized = raw_company_input.title()
+            if normalized in company_list:
+                company = normalized
+            else:
+                company = "My Company Is Not Listed"
 
     st.markdown(
         """
