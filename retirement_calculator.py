@@ -45,6 +45,15 @@ st.markdown(
     html, body, [class*="css"] {
         font-family: 'Montserrat', sans-serif;
     }
+    div.stButton > button:first-child {
+        background-color: #C17A49;
+        color: white;
+        border-color: #C17A49;
+    }
+    div.stButton > button:first-child:hover {
+        background-color: #A86B3D;
+        border-color: #A86B3D;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -222,22 +231,31 @@ with left:
 # --------------------------------------------------
 # Handle Calculate
 # --------------------------------------------------
-if calculate and salary_input and balance_input and age_input < 65 and company:
-    st.session_state.age_used = age_input
-    st.session_state.salary_used = salary_input
-    st.session_state.balance_used = balance_input
+if calculate:
+    if salary_input is None or salary_input <= 0:
+        st.error("Please enter a salary greater than $0 to run the projection.")
+    elif balance_input is None:
+        st.error("Please enter your current 401(k) balance.")
+    elif age_input >= 65:
+        st.error("Projection only supports ages under 65.")
+    elif not company:
+        st.error("Please select or enter a company name.")
+    else:
+        st.session_state.age_used = age_input
+        st.session_state.salary_used = salary_input
+        st.session_state.balance_used = balance_input
 
-    try:
-        if supabase:
-            supabase.table("submissions").insert({
-                "age": age_input,
-                "salary": salary_input,
-                "balance": balance_input,
-                "company": company,
-                "created_at": datetime.utcnow().isoformat()
-            }).execute()
-    except Exception:
-        pass
+        try:
+            if supabase:
+                supabase.table("submissions").insert({
+                    "age": age_input,
+                    "salary": salary_input,
+                    "balance": balance_input,
+                    "company": company,
+                    "created_at": datetime.utcnow().isoformat()
+                }).execute()
+        except Exception:
+            pass
 
 # --------------------------------------------------
 # Compute Projection
@@ -270,6 +288,28 @@ with right:
         mode="lines",
         name="With Bison by Your Side (11.8%)",
         line=dict(color=help_color, width=4),
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=[df["age"].iloc[-1]],
+        y=[df["baseline"].iloc[-1]],
+        mode="markers+text",
+        text=[f"${df['baseline'].iloc[-1]:,.0f}"],
+        textposition="top right",
+        marker=dict(color=baseline_color, size=10),
+        name="Baseline Final",
+        showlegend=False
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=[df["age"].iloc[-1]],
+        y=[df["with_help"].iloc[-1]],
+        mode="markers+text",
+        text=[f"${df['with_help'].iloc[-1]:,.0f}"],
+        textposition="bottom right",
+        marker=dict(color=help_color, size=10),
+        name="With Help Final",
+        showlegend=False
     ))
 
     fig.update_layout(
