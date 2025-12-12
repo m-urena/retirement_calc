@@ -295,9 +295,8 @@ with right:
         y=[df["baseline"].iloc[-1]],
         mode="markers+text",
         text=[f"${df['baseline'].iloc[-1]:,.0f}"],
-        textposition="middle left",
-        textfont=dict(size=14, color=baseline_color),
-        marker=dict(color=baseline_color, size=12),
+        textposition="top right",
+        marker=dict(color=baseline_color, size=10),
         name="Baseline Final",
         showlegend=False
     ))
@@ -307,9 +306,8 @@ with right:
         y=[df["with_help"].iloc[-1]],
         mode="markers+text",
         text=[f"${df['with_help'].iloc[-1]:,.0f}"],
-        textposition="middle left",
-        textfont=dict(size=14, color=help_color),
-        marker=dict(color=help_color, size=12),
+        textposition="bottom right",
+        marker=dict(color=help_color, size=10),
         name="With Help Final",
         showlegend=False
     ))
