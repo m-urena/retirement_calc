@@ -43,26 +43,26 @@ COMPANY_FILE_PREFIX = "AL - ID Skip GA"
 
 @st.cache_data(show_spinner=False)
 def load_company_names():
-    matches = sorted(DATA_DIR.glob(f"{COMPANY_FILE_PREFIX}*"))
+    matches = sorted(DATA_DIR.glob("*.xlsx"))
     if not matches:
         return []
 
     data_path = matches[0]
 
     try:
-        if data_path.suffix.lower() == ".csv":
-            df = pd.read_csv(data_path)
-        else:
-            df = pd.read_excel(data_path)
-    except Exception:
+        df = pd.read_excel(data_path, engine="openpyxl")
+    except Exception as e:
+        st.write("DEBUG: Excel read error:", e)
         return []
 
-    col_name = "Plan sponsor's name"
-    if col_name not in df.columns:
+    df.columns = df.columns.str.strip()
+
+    if "Company Name" not in df.columns:
+        st.write("DEBUG: Available columns:", df.columns.tolist())
         return []
 
     names = (
-        df[col_name]
+        df["Company Name"]
         .dropna()
         .astype(str)
         .str.strip()
@@ -71,6 +71,7 @@ def load_company_names():
     )
 
     return sorted(set(names))
+
 
 # --------------------------------------------------
 # Logo
