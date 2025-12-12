@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from supabase import create_client, Client
 import os
+from pathlib import Path
 import base64
 
 
@@ -42,61 +43,48 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # --------------------------------------------------
 # Company data setup
 # --------------------------------------------------
+DATA_DIR = Path(__file__).resolve().parent / "Data"
+COMPANY_FILE_PREFIX = "AL - ID Skip GA"
+
+
 @st.cache_data(show_spinner=False)
 def load_company_names():
-    """Load normalized plan sponsor names from the data file.
+    """Load plan sponsor names from the provided data file.
 
-    Falls back to an empty list if the file is missing or unreadable so the UI
-    can still operate and present the "My Company Is Not Listed" option.
+    Supports CSV or Excel files with a filename starting with the
+    COMPANY_FILE_PREFIX. Returns a sorted list with the fallback
+    "My Company Is Not Listed" first.
     """
 
-    base_dir = os.path.dirname(__file__)
-    data_dir = os.path.join(base_dir, "Data")
-    filename = "AL - ID Skip GA"
+    fallback = ["My Company Is Not Listed"]
+    matches = sorted(DATA_DIR.glob(f"{COMPANY_FILE_PREFIX}*"))
+    if not matches:
+        return fallback
 
-    potential_paths = [
-        os.path.join(data_dir, f"{filename}{ext}") for ext in (".csv", ".xlsx", ".xls")
-    ]
-
-    data_path = next((path for path in potential_paths if os.path.exists(path)), None)
-    if not data_path:
-        return []
-
+    data_path = matches[0]
     try:
-        if data_path.endswith(".csv"):
+        if data_path.suffix.lower() == ".csv":
             df = pd.read_csv(data_path)
         else:
             df = pd.read_excel(data_path)
     except Exception:
-        return []
+        return fallback
 
-    target_col = next(
-        (col for col in df.columns if col.strip().lower() == "plan sponsor's name".lower()),
-        None,
-    )
-    if not target_col:
-        return []
+    col_name = "Plan sponsor's name"
+    if col_name not in df.columns:
+        return fallback
 
     names = (
-        df[target_col]
+        df[col_name]
         .dropna()
         .astype(str)
-        .map(str.strip)
-        .replace("", pd.NA)
-        .dropna()
+        .map(lambda x: x.strip())
+        .loc[lambda s: s != ""]
+        .map(lambda x: x.title())
     )
 
-    normalized = []
-    seen = set()
-    for name in names:
-        display_name = name.title()
-        key = display_name.lower()
-        if key not in seen:
-            normalized.append(display_name)
-            seen.add(key)
-
-    normalized.sort()
-    return normalized
+    unique_sorted = sorted(set(names))
+    return fallback + unique_sorted
 #----------------------------------------
 #Logo
 # --------------------------------------------------
@@ -208,43 +196,17 @@ with left:
     st.subheader("Your Information")
 
     company_options = load_company_names()
-    not_listed_label = "My Company Is Not Listed"
 
     age_input = st.number_input("Your Age", min_value=18, max_value=100, value=42)
     salary_str = st.text_input("Current Annual Salary ($)", value="84,000")
     balance_str = st.text_input("Current 401(k) Balance ($)", value="76,500")
-
-    company_query = st.text_input(
+    company = st.selectbox(
         "Company Name",
+        company_options,
+        index=0,
         placeholder="Start typing to search your company",
     )
-
-    def matching_companies(query: str):
-        if not query:
-            return company_options[:6]
-        lowered = query.lower()
-        return [name for name in company_options if lowered in name.lower()][:6]
-
-    filtered_companies = matching_companies(company_query)
-    option_list = filtered_companies + [not_listed_label]
-    default_index = 0 if filtered_companies else len(option_list) - 1
-
-    selected_option = st.selectbox(
-        "Select a matching company", option_list, index=default_index
-    )
-
-    if selected_option != not_listed_label:
-        company_selection = selected_option
-    else:
-        exact_match = next(
-            (
-                name
-                for name in company_options
-                if company_query and name.lower() == company_query.lower()
-            ),
-            None,
-        )
-        company_selection = exact_match or not_listed_label
+    company_selection = company or "My Company Is Not Listed"
 
     salary_input = parse_number(salary_str)
     balance_input = parse_number(balance_str)
@@ -289,13 +251,12 @@ if calculate:
         st.session_state.age_used = age_input
         st.session_state.salary_used = salary_input
         st.session_state.balance_used = balance_input
-        company_value = company_selection
 
         supabase.table("submissions").insert({
             "age": age_input,
             "salary": salary_input,
             "balance": balance_input,
-            "company": company_value,
+            "company": company.strip() if company.strip() else "Unknown",
             "created_at": datetime.utcnow().isoformat()
         }).execute()
 
@@ -397,7 +358,7 @@ st.markdown(
 DEFAULT_CALENDLY = "https://calendly.com/placeholder"
 ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
 
-normalized_company = company_selection.strip().lower()
+normalized_company = company.strip().lower()
 calendly_link = (
     ALT_CALENDLY
     if normalized_company == "my company is not listed".lower()
