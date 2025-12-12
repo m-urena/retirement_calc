@@ -21,19 +21,19 @@ st.set_page_config(
 is_dark_mode = st.get_option("theme.base") == "dark"
 
 if is_dark_mode:
-    plot_bg = "#0B0F14"      # deep black-blue
-    paper_bg = "#0B0F14"
+    plot_bg = "#000000"
+    paper_bg = "#000000"
     grid_color = "#1F2933"
-    axis_color = "#E5E7EB"
-    baseline_color = "#FFFFFF"   
-    help_color = "#C17A49"      
+    axis_color = "#FFFFFF"
+    baseline_color = "#9CA3AF"  # neutral gray for "without help"
+    help_color = "#C17A49"      # branded orange for "with help"
 else:
     plot_bg = "white"
     paper_bg = "white"
     grid_color = "#E0E0E0"
     axis_color = "#000000"
     baseline_color = "#7D7D7D"
-    help_color = "#25385A"
+    help_color = "#C17A49"
 
 # --------------------------------------------------
 # Global CSS
@@ -44,6 +44,15 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
     html, body, [class*="css"] {
         font-family: 'Montserrat', sans-serif;
+    }
+    div.stButton > button:first-child {
+        background-color: #C17A49;
+        color: white;
+        border-color: #C17A49;
+    }
+    div.stButton > button:first-child:hover {
+        background-color: #A86B3D;
+        border-color: #A86B3D;
     }
     </style>
     """,
@@ -222,22 +231,31 @@ with left:
 # --------------------------------------------------
 # Handle Calculate
 # --------------------------------------------------
-if calculate and salary_input and balance_input and age_input < 65 and company:
-    st.session_state.age_used = age_input
-    st.session_state.salary_used = salary_input
-    st.session_state.balance_used = balance_input
+if calculate:
+    if salary_input is None or salary_input <= 0:
+        st.error("Please enter a salary greater than $0 to run the projection.")
+    elif balance_input is None:
+        st.error("Please enter your current 401(k) balance.")
+    elif age_input >= 65:
+        st.error("Projection only supports ages under 65.")
+    elif not company:
+        st.error("Please select or enter a company name.")
+    else:
+        st.session_state.age_used = age_input
+        st.session_state.salary_used = salary_input
+        st.session_state.balance_used = balance_input
 
-    try:
-        if supabase:
-            supabase.table("submissions").insert({
-                "age": age_input,
-                "salary": salary_input,
-                "balance": balance_input,
-                "company": company,
-                "created_at": datetime.utcnow().isoformat()
-            }).execute()
-    except Exception:
-        pass
+        try:
+            if supabase:
+                supabase.table("submissions").insert({
+                    "age": age_input,
+                    "salary": salary_input,
+                    "balance": balance_input,
+                    "company": company,
+                    "created_at": datetime.utcnow().isoformat()
+                }).execute()
+        except Exception:
+            pass
 
 # --------------------------------------------------
 # Compute Projection
@@ -270,6 +288,30 @@ with right:
         mode="lines",
         name="With Bison by Your Side (11.8%)",
         line=dict(color=help_color, width=4),
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=[df["age"].iloc[-1]],
+        y=[df["baseline"].iloc[-1]],
+        mode="markers+text",
+        text=[f"${df['baseline'].iloc[-1]:,.0f}"],
+        textposition="middle left",
+        textfont=dict(size=14, color=baseline_color),
+        marker=dict(color=baseline_color, size=12),
+        name="Baseline Final",
+        showlegend=False
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=[df["age"].iloc[-1]],
+        y=[df["with_help"].iloc[-1]],
+        mode="markers+text",
+        text=[f"${df['with_help'].iloc[-1]:,.0f}"],
+        textposition="middle left",
+        textfont=dict(size=14, color=help_color),
+        marker=dict(color=help_color, size=12),
+        name="With Help Final",
+        showlegend=False
     ))
 
     fig.update_layout(
