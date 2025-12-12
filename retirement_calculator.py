@@ -89,7 +89,24 @@ with open(logo_path, "rb") as f:
 
 st.markdown(
     f"""
-    <div style="position:absolute; top:70px; right:40px; z-index:999;">
+    <style>
+    /* Desktop logo */
+    .bison-logo {{
+        position: absolute;
+        top: 70px;
+        right: 40px;
+        z-index: 999;
+    }}
+
+    /* Hide logo on small screens */
+    @media (max-width: 768px) {{
+        .bison-logo {{
+            display: none;
+        }}
+    }}
+    </style>
+
+    <div class="bison-logo">
         <img src="data:image/png;base64,{logo_b64}" width="150">
     </div>
     """,
