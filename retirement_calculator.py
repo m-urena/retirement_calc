@@ -49,7 +49,6 @@ if is_dark_mode:
     axis_color = "#FFFFFF"
     baseline_color = "#9CA3AF"  # neutral gray for "without help"
     help_color = "#C17A49"      # branded orange for "with help"
-    diff_color = help_color
     plot_template = "plotly_dark"
 else:
     plot_bg = "white"
@@ -57,8 +56,7 @@ else:
     grid_color = "#E0E0E0"
     axis_color = "#000000"
     baseline_color = "#7D7D7D"
-    help_color = "#2B6CB0"      # blue accent for light mode
-    diff_color = help_color
+    help_color = "#C17A49"
     plot_template = "plotly_white"
 
 # --------------------------------------------------
@@ -321,9 +319,8 @@ with right:
         y=[df["baseline"].iloc[-1]],
         mode="markers+text",
         text=[f"${df['baseline'].iloc[-1]:,.0f}"],
-        textposition="middle left",
-        textfont=dict(size=14, color=baseline_color),
-        marker=dict(color=baseline_color, size=12),
+        textposition="top right",
+        marker=dict(color=baseline_color, size=10),
         name="Baseline Final",
         showlegend=False
     ))
@@ -333,9 +330,8 @@ with right:
         y=[df["with_help"].iloc[-1]],
         mode="markers+text",
         text=[f"${df['with_help'].iloc[-1]:,.0f}"],
-        textposition="middle left",
-        textfont=dict(size=14, color=help_color),
-        marker=dict(color=help_color, size=12),
+        textposition="bottom right",
+        marker=dict(color=help_color, size=10),
         name="With Help Final",
         showlegend=False
     ))
