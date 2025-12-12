@@ -36,7 +36,7 @@ SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # --------------------------------------------------
-# Load Company Names (CSV)
+# Load Company Names
 # --------------------------------------------------
 @st.cache_data(show_spinner=False)
 def load_company_names():
@@ -174,13 +174,12 @@ with left:
     company = None
     raw_company_input = company_input.strip() if company_input else ""
 
-    if raw_company_input:
-        if len(raw_company_input) >= 3:
-            normalized = raw_company_input.title()
-            if normalized in company_list:
-                company = normalized
-            else:
-                company = "My Company Is Not Listed"
+    if raw_company_input and len(raw_company_input) >= 3:
+        normalized = raw_company_input.title()
+        if normalized in company_list:
+            company = normalized
+        else:
+            company = "My Company Is Not Listed"
 
     st.markdown(
         """
@@ -272,7 +271,7 @@ with right:
     st.plotly_chart(fig, use_container_width=True)
 
 # --------------------------------------------------
-# CTA
+# CTA + Calendly Button
 # --------------------------------------------------
 final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 
@@ -281,6 +280,36 @@ st.markdown(
     <div style="text-align:center; font-size:26px; margin-top:20px;">
         Is <span style="font-weight:700; color:#25385A;">
         ${final_diff:,.0f}</span> worth 30 minutes of your time?
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+DEFAULT_CALENDLY = "https://calendly.com/placeholder"
+ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
+
+normalized_company = company.lower() if company else ""
+calendly_link = (
+    ALT_CALENDLY
+    if normalized_company == "my company is not listed"
+    else DEFAULT_CALENDLY
+)
+
+st.markdown(
+    f"""
+    <div style="text-align:center; margin-top:20px;">
+        <a href="{calendly_link}" target="_blank"
+           style="
+               background-color:#C17A49;
+               color:white;
+               padding:14px 28px;
+               text-decoration:none;
+               border-radius:8px;
+               font-size:18px;
+               font-family:Montserrat, sans-serif;
+           ">
+           Schedule a Conversation
+        </a>
     </div>
     """,
     unsafe_allow_html=True
