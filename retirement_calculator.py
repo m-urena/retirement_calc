@@ -7,6 +7,9 @@ import os
 from pathlib import Path
 import base64
 
+# --------------------------------------------------
+# Streamlit Page Config
+# --------------------------------------------------
 st.set_page_config(
     page_title="Bison Wealth 401(k) Growth Simulator",
     page_icon="🦬",
@@ -25,10 +28,16 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# --------------------------------------------------
+# Supabase Setup
+# --------------------------------------------------
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# --------------------------------------------------
+# Company Data Setup
+# --------------------------------------------------
 DATA_DIR = Path(__file__).resolve().parent / "Data"
 COMPANY_FILE_PREFIX = "AL - ID Skip GA"
 
@@ -63,6 +72,9 @@ def load_company_names():
 
     return sorted(set(names))
 
+# --------------------------------------------------
+# Logo
+# --------------------------------------------------
 logo_path = os.path.join(os.path.dirname(__file__), "bison_logo.png")
 with open(logo_path, "rb") as logo_file:
     logo_b64 = base64.b64encode(logo_file.read()).decode()
@@ -79,12 +91,18 @@ st.markdown(
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
 
+# --------------------------------------------------
+# Helpers
+# --------------------------------------------------
 def parse_number(x):
     try:
         return float(x.replace(",", "").strip())
     except (TypeError, ValueError):
         return None
 
+# --------------------------------------------------
+# Projection Logic
+# --------------------------------------------------
 @st.cache_data(show_spinner=False)
 def compute_projection(age, salary, balance):
     target_age = 65
@@ -132,6 +150,9 @@ def compute_projection(age, salary, balance):
         "with_help": helpvals
     })
 
+# --------------------------------------------------
+# Session State Defaults
+# --------------------------------------------------
 if "age_used" not in st.session_state:
     st.session_state.age_used = 42
 if "salary_used" not in st.session_state:
@@ -139,6 +160,9 @@ if "salary_used" not in st.session_state:
 if "balance_used" not in st.session_state:
     st.session_state.balance_used = 76500
 
+# --------------------------------------------------
+# Inputs Section
+# --------------------------------------------------
 left, right = st.columns([1, 2])
 
 with left:
@@ -148,31 +172,24 @@ with left:
     salary_str = st.text_input("Current Annual Salary ($)", value="84,000")
     balance_str = st.text_input("Current 401(k) Balance ($)", value="76,500")
 
-    company_list = load_company_names()
-
-    company_search = st.text_input(
-        "Company Name",
-        placeholder="Type your company's name"
-    )
-
-    selected_company = None
-
-    if company_search:
-        matches = [
-            c for c in company_list
-            if company_search.lower() in c.lower()
-        ]
-
-        if matches:
-            selected_company = st.selectbox(
-                "Select your company",
-                matches
-            )
-        else:
-            selected_company = "My Company Is Not Listed"
-
     salary_input = parse_number(salary_str)
     balance_input = parse_number(balance_str)
+
+    company_list = load_company_names()
+
+    # ---- DEBUG OUTPUT (REMOVE AFTER CONFIRMATION) ----
+    st.write("DEBUG: Number of companies loaded:", len(company_list))
+    st.write("DEBUG: Sample companies:", company_list[:10])
+    # --------------------------------------------------
+
+    company_options = company_list + ["My Company Is Not Listed"]
+
+    company = st.selectbox(
+        "Company Name",
+        options=company_options,
+        index=None,
+        placeholder="Type your company's name"
+    )
 
     st.markdown(
         """
@@ -194,7 +211,16 @@ with left:
 
     calculate = st.button("Calculate", type="primary")
 
-if calculate and salary_input and balance_input and age_input < 65:
+# --------------------------------------------------
+# Handle Calculate
+# --------------------------------------------------
+if (
+    calculate
+    and salary_input
+    and balance_input
+    and age_input < 65
+    and company
+):
     st.session_state.age_used = age_input
     st.session_state.salary_used = salary_input
     st.session_state.balance_used = balance_input
@@ -203,16 +229,22 @@ if calculate and salary_input and balance_input and age_input < 65:
         "age": age_input,
         "salary": salary_input,
         "balance": balance_input,
-        "company": selected_company or "Unknown",
+        "company": company,
         "created_at": datetime.utcnow().isoformat()
     }).execute()
 
+# --------------------------------------------------
+# Compute Projection
+# --------------------------------------------------
 df = compute_projection(
     st.session_state.age_used,
     st.session_state.salary_used,
     st.session_state.balance_used
 )
 
+# --------------------------------------------------
+# Graph Section
+# --------------------------------------------------
 with right:
     st.subheader("Estimated 401(k) Growth")
 
@@ -250,6 +282,9 @@ with right:
 
     st.plotly_chart(fig, use_container_width=True)
 
+# --------------------------------------------------
+# CTA
+# --------------------------------------------------
 final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 
 st.markdown(
@@ -264,7 +299,7 @@ st.markdown(
 DEFAULT_CALENDLY = "https://calendly.com/placeholder"
 ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
 
-normalized_company = (selected_company or "").lower()
+normalized_company = company.lower() if company else ""
 calendly_link = ALT_CALENDLY if normalized_company == "my company is not listed" else DEFAULT_CALENDLY
 
 st.markdown(
@@ -280,6 +315,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# --------------------------------------------------
+# Disclosure
+# --------------------------------------------------
 st.caption(
     "For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contribution "
     "(7.8% employee, 4.6% employer). Performance without help is the 5-year annualized return of the "
