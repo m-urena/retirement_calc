@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from supabase import create_client, Client
 import os
+from pathlib import Path
 import base64
 
 
@@ -37,6 +38,53 @@ SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]   # MUST be the secret key
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
+# --------------------------------------------------
+# Company data setup
+# --------------------------------------------------
+DATA_DIR = Path(__file__).resolve().parent / "Data"
+COMPANY_FILE_PREFIX = "AL - ID Skip GA"
+
+
+@st.cache_data(show_spinner=False)
+def load_company_names():
+    """Load plan sponsor names from the provided data file.
+
+    Supports CSV or Excel files with a filename starting with the
+    COMPANY_FILE_PREFIX. Returns a sorted list with the fallback
+    "My Company Is Not Listed" first.
+    """
+
+    fallback = ["My Company Is Not Listed"]
+    matches = sorted(DATA_DIR.glob(f"{COMPANY_FILE_PREFIX}*"))
+    if not matches:
+        return fallback
+
+    data_path = matches[0]
+    try:
+        if data_path.suffix.lower() == ".csv":
+            df = pd.read_csv(data_path)
+        else:
+            df = pd.read_excel(data_path)
+    except Exception:
+        return fallback
+
+    col_name = "Plan sponsor's name"
+    if col_name not in df.columns:
+        return fallback
+
+    names = (
+        df[col_name]
+        .dropna()
+        .astype(str)
+        .map(lambda x: x.strip())
+        .loc[lambda s: s != ""]
+        .map(lambda x: x.title())
+    )
+
+    unique_sorted = sorted(set(names))
+    return fallback + unique_sorted
 #----------------------------------------
 #Logo
 # --------------------------------------------------
@@ -147,10 +195,18 @@ with left:
 
     st.subheader("Your Information")
 
+    company_options = load_company_names()
+
     age_input = st.number_input("Your Age", min_value=18, max_value=100, value=42)
     salary_str = st.text_input("Current Annual Salary ($)", value="84,000")
     balance_str = st.text_input("Current 401(k) Balance ($)", value="76,500")
-    company = st.text_input("Company Name", placeholder="Where do you work?")
+    company = st.selectbox(
+        "Company Name",
+        company_options,
+        index=0,
+        placeholder="Start typing to search your company",
+    )
+    company_selection = company or "My Company Is Not Listed"
 
     salary_input = parse_number(salary_str)
     balance_input = parse_number(balance_str)
