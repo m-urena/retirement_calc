@@ -21,19 +21,19 @@ st.set_page_config(
 is_dark_mode = st.get_option("theme.base") == "dark"
 
 if is_dark_mode:
-    plot_bg = "#0B0F14"      # deep black-blue
-    paper_bg = "#0B0F14"
+    plot_bg = "#000000"
+    paper_bg = "#000000"
     grid_color = "#1F2933"
-    axis_color = "#E5E7EB"
-    baseline_color = "#FFFFFF"   
-    help_color = "#C17A49"      
+    axis_color = "#FFFFFF"
+    baseline_color = "#9CA3AF"  # neutral gray for "without help"
+    help_color = "#C17A49"      # branded orange for "with help"
 else:
     plot_bg = "white"
     paper_bg = "white"
     grid_color = "#E0E0E0"
     axis_color = "#000000"
     baseline_color = "#7D7D7D"
-    help_color = "#25385A"
+    help_color = "#C17A49"
 
 # --------------------------------------------------
 # Global CSS
