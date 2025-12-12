@@ -21,12 +21,12 @@ st.set_page_config(
 is_dark_mode = st.get_option("theme.base") == "dark"
 
 if is_dark_mode:
-    plot_bg = "#0E1117"
-    paper_bg = "#0E1117"
-    grid_color = "#2A2A2A"
-    axis_color = "#E6E6E6"
-    baseline_color = "#A0A0A0"
-    help_color = "#9EC1FF"
+    plot_bg = "#0B0F14"      # deep black-blue
+    paper_bg = "#0B0F14"
+    grid_color = "#1F2933"
+    axis_color = "#E5E7EB"
+    baseline_color = "#FFFFFF"   
+    help_color = "#C17A49"      
 else:
     plot_bg = "white"
     paper_bg = "white"
@@ -263,7 +263,7 @@ with right:
         name="On Your Lonesome (8.5%)",
         line=dict(color=baseline_color, width=3),
     ))
-
+    
     fig.add_trace(go.Scatter(
         x=df["age"],
         y=df["with_help"],
@@ -277,20 +277,28 @@ with right:
         margin=dict(l=20, r=20, t=20, b=40),
         plot_bgcolor=plot_bg,
         paper_bgcolor=paper_bg,
-        font=dict(family="Montserrat", color=axis_color),
+        font=dict(
+            family="Montserrat",
+            color=axis_color
+        ),
         xaxis=dict(
             title=dict(text="Age", font=dict(color=axis_color)),
             gridcolor=grid_color,
+            zeroline=False,
             tickfont=dict(color=axis_color),
             fixedrange=True,
         ),
         yaxis=dict(
             title=dict(text="Portfolio Value ($)", font=dict(color=axis_color)),
             gridcolor=grid_color,
+            zeroline=False,
             tickfont=dict(color=axis_color),
             fixedrange=True,
         ),
-        legend=dict(font=dict(color=axis_color)),
+        legend=dict(
+            font=dict(color=axis_color),
+            bgcolor="rgba(0,0,0,0)"
+        ),
         hovermode="x unified",
         dragmode=False,
     )
@@ -337,6 +345,9 @@ st.markdown(
 # --------------------------------------------------
 # Disclosure
 # --------------------------------------------------
+
+st.space("large")
+st.space("large")
 st.caption(
     "For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contribution "
     "(7.8% employee, 4.6% employer). Performance without help is the 5-year annualized return of the "
