@@ -36,29 +36,19 @@ SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # --------------------------------------------------
-# Company Data Setup
+# Load Company Names
 # --------------------------------------------------
-DATA_DIR = Path(__file__).resolve().parent / "Data"
-COMPANY_FILE_PREFIX = "AL - ID Skip GA"
-
 @st.cache_data(show_spinner=False)
 def load_company_names():
     data_path = Path(__file__).resolve().parent / "Data.csv"
 
     if not data_path.exists():
-        st.write("DEBUG: Data.csv not found at:", data_path)
         return []
 
-    try:
-        df = pd.read_csv(data_path)
-    except Exception as e:
-        st.write("DEBUG: CSV read error:", e)
-        return []
-
+    df = pd.read_csv(data_path)
     df.columns = df.columns.str.strip()
 
     if "Company Name" not in df.columns:
-        st.write("DEBUG: Available columns:", df.columns.tolist())
         return []
 
     names = (
@@ -76,8 +66,8 @@ def load_company_names():
 # Logo
 # --------------------------------------------------
 logo_path = os.path.join(os.path.dirname(__file__), "bison_logo.png")
-with open(logo_path, "rb") as logo_file:
-    logo_b64 = base64.b64encode(logo_file.read()).decode()
+with open(logo_path, "rb") as f:
+    logo_b64 = base64.b64encode(f.read()).decode()
 
 st.markdown(
     f"""
@@ -97,7 +87,7 @@ st.write("Visualize how your 401(k) could grow **with and without Bison’s guid
 def parse_number(x):
     try:
         return float(x.replace(",", "").strip())
-    except (TypeError, ValueError):
+    except Exception:
         return None
 
 # --------------------------------------------------
@@ -140,18 +130,14 @@ def compute_projection(age, salary, balance):
 
         return out[:num_points]
 
-    baseline = project(balance, annual_contribs, r_no_help)
-    helpvals = project(balance, annual_contribs, r_help)
-    ages = list(range(age, age + num_points))
-
     return pd.DataFrame({
-        "age": ages,
-        "baseline": baseline,
-        "with_help": helpvals
+        "age": list(range(age, age + num_points)),
+        "baseline": project(balance, annual_contribs, r_no_help),
+        "with_help": project(balance, annual_contribs, r_help)
     })
 
 # --------------------------------------------------
-# Session State Defaults
+# Session Defaults
 # --------------------------------------------------
 if "age_used" not in st.session_state:
     st.session_state.age_used = 42
@@ -161,35 +147,44 @@ if "balance_used" not in st.session_state:
     st.session_state.balance_used = 76500
 
 # --------------------------------------------------
-# Inputs Section
+# Inputs
 # --------------------------------------------------
 left, right = st.columns([1, 2])
 
 with left:
     st.subheader("Your Information")
 
-    age_input = st.number_input("Your Age", min_value=18, max_value=100, value=42)
-    salary_str = st.text_input("Current Annual Salary ($)", value="84,000")
-    balance_str = st.text_input("Current 401(k) Balance ($)", value="76,500")
+    age_input = st.number_input("Your Age", 18, 100, 42)
+    salary_str = st.text_input("Current Annual Salary ($)", "84,000")
+    balance_str = st.text_input("Current 401(k) Balance ($)", "76,500")
 
     salary_input = parse_number(salary_str)
     balance_input = parse_number(balance_str)
 
     company_list = load_company_names()
 
-    # ---- DEBUG OUTPUT (REMOVE AFTER CONFIRMATION) ----
-    st.write("DEBUG: Number of companies loaded:", len(company_list))
-    st.write("DEBUG: Sample companies:", company_list[:10])
-    # --------------------------------------------------
-
-    company_options = company_list + ["My Company Is Not Listed"]
-
-    company = st.selectbox(
+    company_search = st.text_input(
         "Company Name",
-        options=company_options,
-        index=None,
-        placeholder="Type your company's name"
+        placeholder="Type at least 3 characters"
     )
+
+    company = None
+
+    if len(company_search.strip()) >= 3:
+        matches = [
+            c for c in company_list
+            if company_search.lower() in c.lower()
+        ]
+
+        if matches:
+            company = st.selectbox(
+                "Select your company",
+                matches,
+                key="company_select"
+            )
+        else:
+            company = "My Company Is Not Listed"
+            st.info("No matching company found. Set to *My Company Is Not Listed*.")
 
     st.markdown(
         """
@@ -199,8 +194,7 @@ with left:
             color: white !important;
             border-radius: 6px !important;
             height: 40px !important;
-            padding-left: 20px !important;
-            padding-right: 20px !important;
+            padding: 0 20px !important;
             border: none !important;
             font-family: 'Montserrat', sans-serif !important;
         }
@@ -243,7 +237,7 @@ df = compute_projection(
 )
 
 # --------------------------------------------------
-# Graph Section
+# Chart
 # --------------------------------------------------
 with right:
     st.subheader("Estimated 401(k) Growth")
@@ -255,8 +249,7 @@ with right:
         y=df["baseline"],
         mode="lines",
         name="On Your Lonesome (8.5%)",
-        line=dict(color="#7D7D7D", width=3),
-        hovertemplate="Age %{x}<br>$%{y:,.0f}<extra></extra>"
+        line=dict(color="#7D7D7D", width=3)
     ))
 
     fig.add_trace(go.Scatter(
@@ -264,8 +257,7 @@ with right:
         y=df["with_help"],
         mode="lines",
         name="With Bison by Your Side (11.8%)",
-        line=dict(color="#25385A", width=4),
-        hovertemplate="Age %{x}<br>$%{y:,.0f}<extra></extra>"
+        line=dict(color="#25385A", width=4)
     ))
 
     fig.update_layout(
@@ -273,9 +265,9 @@ with right:
         margin=dict(l=20, r=20, t=20, b=40),
         plot_bgcolor="white",
         paper_bgcolor="white",
-        font=dict(family="Montserrat, sans-serif"),
-        xaxis=dict(title="Age", fixedrange=True),
-        yaxis=dict(title="Portfolio Value ($)", fixedrange=True),
+        font=dict(family="Montserrat"),
+        xaxis=dict(title="Age"),
+        yaxis=dict(title="Portfolio Value ($)"),
         hovermode="x unified",
         dragmode=False
     )
@@ -290,26 +282,8 @@ final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 st.markdown(
     f"""
     <div style="text-align:center; font-size:26px; margin-top:20px;">
-        Is <span style="font-weight:700; color:#25385A;">${final_diff:,.0f}</span> worth 30 minutes of your time?
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-DEFAULT_CALENDLY = "https://calendly.com/placeholder"
-ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
-
-normalized_company = company.lower() if company else ""
-calendly_link = ALT_CALENDLY if normalized_company == "my company is not listed" else DEFAULT_CALENDLY
-
-st.markdown(
-    f"""
-    <div style="text-align:center; margin-top:20px;">
-        <a href="{calendly_link}" target="_blank"
-           style="background-color:#C17A49; color:white; padding:14px 28px;
-                  text-decoration:none; border-radius:8px; font-size:18px;">
-           Schedule a Conversation
-        </a>
+        Is <span style="font-weight:700; color:#25385A;">
+        ${final_diff:,.0f}</span> worth 30 minutes of your time?
     </div>
     """,
     unsafe_allow_html=True
