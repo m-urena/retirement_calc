@@ -43,16 +43,16 @@ COMPANY_FILE_PREFIX = "AL - ID Skip GA"
 
 @st.cache_data(show_spinner=False)
 def load_company_names():
-    matches = sorted(DATA_DIR.glob("*.xlsx"))
-    if not matches:
+    data_path = Path(__file__).resolve().parent / "Data.csv"
+
+    if not data_path.exists():
+        st.write("DEBUG: Data.csv not found at:", data_path)
         return []
 
-    data_path = matches[0]
-
     try:
-        df = pd.read_excel(data_path, engine="openpyxl")
+        df = pd.read_csv(data_path)
     except Exception as e:
-        st.write("DEBUG: Excel read error:", e)
+        st.write("DEBUG: CSV read error:", e)
         return []
 
     df.columns = df.columns.str.strip()
@@ -71,7 +71,6 @@ def load_company_names():
     )
 
     return sorted(set(names))
-
 
 # --------------------------------------------------
 # Logo
