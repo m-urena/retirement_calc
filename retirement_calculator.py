@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 from supabase import create_client, Client
-import os
 from pathlib import Path
 import base64
 
@@ -15,18 +14,30 @@ st.set_page_config(
     page_icon="🦬",
     layout="wide"
 )
+
+# --------------------------------------------------
+# Dark mode detection + colors
+# --------------------------------------------------
 is_dark_mode = st.get_option("theme.base") == "dark"
+
 if is_dark_mode:
     plot_bg = "#0E1117"
     paper_bg = "#0E1117"
     grid_color = "#2A2A2A"
     axis_color = "#E6E6E6"
+    baseline_color = "#A0A0A0"
+    help_color = "#9EC1FF"
 else:
     plot_bg = "white"
     paper_bg = "white"
     grid_color = "#E0E0E0"
     axis_color = "#000000"
+    baseline_color = "#7D7D7D"
+    help_color = "#25385A"
 
+# --------------------------------------------------
+# Global CSS
+# --------------------------------------------------
 st.markdown(
     """
     <style>
@@ -40,7 +51,7 @@ st.markdown(
 )
 
 # --------------------------------------------------
-# Supabase Setup
+# Supabase Setup (safe)
 # --------------------------------------------------
 def get_secret(key):
     try:
@@ -48,19 +59,15 @@ def get_secret(key):
     except Exception:
         return None
 
-
 def create_supabase_client():
     url = get_secret("SUPABASE_URL")
     key = get_secret("SUPABASE_KEY")
-
     if not url or not key:
         return None
-
     try:
         return create_client(url, key)
     except Exception:
         return None
-
 
 supabase: Client | None = create_supabase_client()
 
@@ -70,7 +77,6 @@ supabase: Client | None = create_supabase_client()
 @st.cache_data(show_spinner=False)
 def load_company_names():
     data_path = Path(__file__).resolve().parent / "Data.csv"
-
     if not data_path.exists():
         return []
 
@@ -80,19 +86,19 @@ def load_company_names():
     if "Company Name" not in df.columns:
         return []
 
-    names = (
-        df["Company Name"]
-        .dropna()
-        .astype(str)
-        .str.strip()
-        .loc[lambda s: s != ""]
-        .str.title()
+    return sorted(
+        set(
+            df["Company Name"]
+            .dropna()
+            .astype(str)
+            .str.strip()
+            .loc[lambda s: s != ""]
+            .str.title()
+        )
     )
 
-    return sorted(set(names))
-
 # --------------------------------------------------
-# Logo
+# Logo (hidden on mobile)
 # --------------------------------------------------
 logo_path = Path(__file__).resolve().parent / "bison_logo.png"
 with open(logo_path, "rb") as f:
@@ -101,15 +107,12 @@ with open(logo_path, "rb") as f:
 st.markdown(
     f"""
     <style>
-    /* Desktop logo */
     .bison-logo {{
         position: absolute;
         top: 70px;
         right: 40px;
         z-index: 999;
     }}
-
-    /* Hide logo on small screens */
     @media (max-width: 768px) {{
         .bison-logo {{
             display: none;
@@ -124,6 +127,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# --------------------------------------------------
+# Header
+# --------------------------------------------------
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
 
@@ -144,18 +150,13 @@ def compute_projection(age, salary, balance):
     target_age = 65
 
     if age >= target_age or salary <= 0:
-        return pd.DataFrame({
-            "age": [age],
-            "baseline": [balance],
-            "with_help": [balance]
-        })
+        return pd.DataFrame({"age": [age], "baseline": [balance], "with_help": [balance]})
 
     years = target_age - age
     num_points = years + 1
 
     salary_growth_rate = 0.03
     contribution_rate = 0.078 + 0.046
-
     r_no_help = 0.0847
     r_help = r_no_help + 0.0332
 
@@ -179,18 +180,15 @@ def compute_projection(age, salary, balance):
     return pd.DataFrame({
         "age": list(range(age, age + num_points)),
         "baseline": project(balance, annual_contribs, r_no_help),
-        "with_help": project(balance, annual_contribs, r_help)
+        "with_help": project(balance, annual_contribs, r_help),
     })
 
 # --------------------------------------------------
 # Session Defaults
 # --------------------------------------------------
-if "age_used" not in st.session_state:
-    st.session_state.age_used = 42
-if "salary_used" not in st.session_state:
-    st.session_state.salary_used = 84000
-if "balance_used" not in st.session_state:
-    st.session_state.balance_used = 76500
+st.session_state.setdefault("age_used", 42)
+st.session_state.setdefault("salary_used", 84000)
+st.session_state.setdefault("balance_used", 76500)
 
 # --------------------------------------------------
 # Inputs
@@ -201,11 +199,8 @@ with left:
     st.subheader("Your Information")
 
     age_input = st.number_input("Your Age", 18, 100, 42)
-    salary_str = st.text_input("Current Annual Salary ($)", "84,000")
-    balance_str = st.text_input("Current 401(k) Balance ($)", "76,500")
-
-    salary_input = parse_number(salary_str)
-    balance_input = parse_number(balance_str)
+    salary_input = parse_number(st.text_input("Current Annual Salary ($)", "84,000"))
+    balance_input = parse_number(st.text_input("Current 401(k) Balance ($)", "76,500"))
 
     company_list = load_company_names()
 
@@ -218,52 +213,32 @@ with left:
     )
 
     company = None
-    raw_company_input = company_input.strip() if company_input else ""
-
-    if raw_company_input and len(raw_company_input) >= 3:
-        normalized = raw_company_input.title()
-        if normalized in company_list:
-            company = normalized
-        else:
-            company = "My Company Is Not Listed"
-
-    st.markdown(
-        """
-        <style>
-        div.stButton > button:first-child {
-            background-color: #C17A49 !important;
-            color: white !important;
-            border-radius: 6px !important;
-            height: 40px !important;
-            padding: 0 20px !important;
-            border: none !important;
-            font-family: 'Montserrat', sans-serif !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+    if company_input and len(company_input.strip()) >= 3:
+        normalized = company_input.strip().title()
+        company = normalized if normalized in company_list else "My Company Is Not Listed"
 
     calculate = st.button("Calculate", type="primary")
 
 # --------------------------------------------------
 # Handle Calculate
 # --------------------------------------------------
-if (calculate and salary_input and balance_input and age_input < 65 and company):
+if calculate and salary_input and balance_input and age_input < 65 and company:
     st.session_state.age_used = age_input
     st.session_state.salary_used = salary_input
     st.session_state.balance_used = balance_input
 
     try:
-        supabase.table("submissions").insert({
-            "age": age_input,
-            "salary": salary_input,
-            "balance": balance_input,
-            "company": company,
-            "created_at": datetime.utcnow().isoformat()
-        }).execute()
+        if supabase:
+            supabase.table("submissions").insert({
+                "age": age_input,
+                "salary": salary_input,
+                "balance": balance_input,
+                "company": company,
+                "created_at": datetime.utcnow().isoformat()
+            }).execute()
     except Exception:
         pass
+
 # --------------------------------------------------
 # Compute Projection
 # --------------------------------------------------
@@ -286,7 +261,7 @@ with right:
         y=df["baseline"],
         mode="lines",
         name="On Your Lonesome (8.5%)",
-        line=dict(color="#7D7D7D", width=3)
+        line=dict(color=baseline_color, width=3),
     ))
 
     fig.add_trace(go.Scatter(
@@ -294,37 +269,7 @@ with right:
         y=df["with_help"],
         mode="lines",
         name="With Bison by Your Side (11.8%)",
-        line=dict(color="#25385A", width=4)
-    ))
-
-    final_age = df["age"].iloc[-1]
-    baseline_final = df["baseline"].iloc[-1]
-    with_help_final = df["with_help"].iloc[-1]
-
-    fig.add_trace(go.Scatter(
-        x=[final_age],
-        y=[baseline_final],
-        mode="markers+text",
-        text=[f"${baseline_final:,.0f}"],
-        textposition="bottom right",
-        textfont=dict(color="#7D7D7D", size=12),
-        marker=dict(color="#7D7D7D", size=10),
-        showlegend=False,
-        hoverinfo="text",
-        name="On Your Lonesome Final"
-    ))
-
-    fig.add_trace(go.Scatter(
-        x=[final_age],
-        y=[with_help_final],
-        mode="markers+text",
-        text=[f"${with_help_final:,.0f}"],
-        textposition="top left",
-        textfont=dict(color="#25385A", size=12, family="Montserrat"),
-        marker=dict(color="#25385A", size=10),
-        showlegend=False,
-        hoverinfo="text",
-        name="With Bison by Your Side Final"
+        line=dict(color=help_color, width=4),
     ))
 
     fig.update_layout(
@@ -332,79 +277,56 @@ with right:
         margin=dict(l=20, r=20, t=20, b=40),
         plot_bgcolor=plot_bg,
         paper_bgcolor=paper_bg,
-        font=dict(
-            family="Montserrat, sans-serif",
-            color=axis_color
-        ),
+        font=dict(family="Montserrat", color=axis_color),
         xaxis=dict(
-            title="Age",
-            fixedrange=True,
+            title=dict(text="Age", font=dict(color=axis_color)),
             gridcolor=grid_color,
             tickfont=dict(color=axis_color),
-            titlefont=dict(color=axis_color)
+            fixedrange=True,
         ),
         yaxis=dict(
-            title="Portfolio Value ($)",
-            fixedrange=True,
+            title=dict(text="Portfolio Value ($)", font=dict(color=axis_color)),
             gridcolor=grid_color,
             tickfont=dict(color=axis_color),
-            titlefont=dict(color=axis_color)
+            fixedrange=True,
         ),
-        legend=dict(
-            font=dict(color=axis_color)
-        ),
+        legend=dict(font=dict(color=axis_color)),
         hovermode="x unified",
-        dragmode=False
+        dragmode=False,
     )
 
-    st.plotly_chart(
-        fig,
-        width="stretch",
-        config={
-            "scrollZoom": False,
-            "doubleClick": False,
-            "displayModeBar": False
-        }
-    )
+    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
 
 # --------------------------------------------------
-# CTA + Calendly Button
+# CTA
 # --------------------------------------------------
 final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 
 st.markdown(
     f"""
     <div style="text-align:center; font-size:26px; margin-top:20px;">
-        Is <span style="font-weight:700; color:#25385A;">
+        Is <span style="font-weight:700; color:{help_color};">
         ${final_diff:,.0f}</span> worth 30 minutes of your time?
     </div>
     """,
     unsafe_allow_html=True
 )
 
+# --------------------------------------------------
+# Calendly
+# --------------------------------------------------
 DEFAULT_CALENDLY = "https://calendly.com/placeholder"
 ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
 
-normalized_company = company.lower() if company else ""
-calendly_link = (
-    ALT_CALENDLY
-    if normalized_company == "my company is not listed"
-    else DEFAULT_CALENDLY
-)
+calendly_link = ALT_CALENDLY if company == "My Company Is Not Listed" else DEFAULT_CALENDLY
 
 st.markdown(
     f"""
     <div style="text-align:center; margin-top:20px;">
         <a href="{calendly_link}" target="_blank"
-           style="
-               background-color:#C17A49;
-               color:white;
-               padding:14px 28px;
-               text-decoration:none;
-               border-radius:8px;
-               font-size:18px;
-               font-family:Montserrat, sans-serif;
-           ">
+           style="background-color:#C17A49; color:white;
+                  padding:14px 28px; text-decoration:none;
+                  border-radius:8px; font-size:18px;">
            Schedule a Conversation
         </a>
     </div>
@@ -415,7 +337,6 @@ st.markdown(
 # --------------------------------------------------
 # Disclosure
 # --------------------------------------------------
-st.space("large")
 st.caption(
     "For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contribution "
     "(7.8% employee, 4.6% employer). Performance without help is the 5-year annualized return of the "
