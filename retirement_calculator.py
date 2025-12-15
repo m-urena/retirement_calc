@@ -111,7 +111,7 @@ supabase: Client | None = create_supabase_client()
 # --------------------------------------------------
 @st.cache_data(show_spinner=False)
 def load_company_names():
-    data_path = Path(__file__).resolve().parent / "Data.csv"
+    data_path = Path(__file__).resolve().parent / "401k Data.csv"
     if not data_path.exists():
         return []
 
