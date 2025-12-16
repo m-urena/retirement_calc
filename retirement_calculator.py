@@ -7,17 +7,17 @@ from pathlib import Path
 import base64
 
 # --------------------------------------------------
-# Streamlit Page Config
+# Streamlit Page Config (iframe-ready)
 # --------------------------------------------------
 st.set_page_config(
     page_title="Bison Wealth 401(k) Growth Simulator",
     page_icon="🦬",
     layout="wide",
-    initial_sidebar_state="collapsed"  # IFRAME CHANGE
+    initial_sidebar_state="collapsed"
 )
 
 # --------------------------------------------------
-# IFRAME: hide Streamlit chrome
+# Hide Streamlit chrome (iframe widget)
 # --------------------------------------------------
 st.markdown(
     """
@@ -26,9 +26,9 @@ st.markdown(
     footer { visibility: hidden; height: 0px; }
     #MainMenu { visibility: hidden; }
 
-    /* Prevent horizontal scroll in iframes */
     html, body {
         overflow-x: hidden;
+        color-scheme: light;
     }
     </style>
     """,
@@ -36,52 +36,21 @@ st.markdown(
 )
 
 # --------------------------------------------------
-# Dark mode detection + colors (UNCHANGED)
+# Fixed (light-mode) colors
 # --------------------------------------------------
-def _hex_to_rgb(hex_color: str):
-    hex_color = hex_color.lstrip("#")
-    if len(hex_color) == 3:
-        hex_color = "".join([c * 2 for c in hex_color])
-    return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+plot_bg = "white"
+paper_bg = "white"
+grid_color = "#E0E0E0"
+axis_color = "#000000"
 
+baseline_color = "#9CA3AF"   # neutral gray
+help_color = "#C17A49"       # Bison orange
+diff_color = help_color
 
-def _is_dark_background(color: str | None) -> bool:
-    if not color:
-        return False
-    try:
-        r, g, b = _hex_to_rgb(color)
-        luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-        return luminance < 0.5
-    except Exception:
-        return False
-
-
-theme_base = st.get_option("theme.base")
-theme_background = st.get_option("theme.backgroundColor")
-
-is_dark_mode = theme_base == "dark" or _is_dark_background(theme_background)
-
-if is_dark_mode:
-    plot_bg = "#000000"
-    paper_bg = "#000000"
-    grid_color = "#1F2933"
-    axis_color = "#FFFFFF"
-    baseline_color = "#9CA3AF"
-    help_color = "#C17A49"
-    diff_color = help_color
-    plot_template = "plotly_dark"
-else:
-    plot_bg = "white"
-    paper_bg = "white"
-    grid_color = "#E0E0E0"
-    axis_color = "#000000"
-    baseline_color = "#7D7D7D"
-    help_color = "#263759"
-    diff_color = help_color
-    plot_template = "plotly_white"
+plot_template = "plotly_white"
 
 # --------------------------------------------------
-# Global CSS (UNCHANGED)
+# Global CSS
 # --------------------------------------------------
 st.markdown(
     """
@@ -90,6 +59,7 @@ st.markdown(
     html, body, [class*="css"] {
         font-family: 'Montserrat', sans-serif;
     }
+
     div.stButton > button:first-child {
         background-color: #C17A49;
         color: white;
@@ -105,7 +75,7 @@ st.markdown(
 )
 
 # --------------------------------------------------
-# Supabase Setup (UNCHANGED)
+# Supabase Setup (safe)
 # --------------------------------------------------
 def get_secret(key):
     try:
@@ -126,7 +96,7 @@ def create_supabase_client():
 supabase: Client | None = create_supabase_client()
 
 # --------------------------------------------------
-# Load Company Names (UNCHANGED)
+# Load Company Names
 # --------------------------------------------------
 @st.cache_data(show_spinner=False)
 def load_company_names():
@@ -152,7 +122,7 @@ def load_company_names():
     )
 
 # --------------------------------------------------
-# Logo (iframe-safe)
+# Logo (hidden on mobile)
 # --------------------------------------------------
 logo_path = Path(__file__).resolve().parent / "bison_logo.png"
 with open(logo_path, "rb") as f:
@@ -165,7 +135,7 @@ st.markdown(
         position: absolute;
         top: 70px;
         right: 40px;
-        z-index: 10;   /* IFRAME CHANGE: lower z-index */
+        z-index: 10;
     }}
     @media (max-width: 768px) {{
         .bison-logo {{
@@ -182,16 +152,12 @@ st.markdown(
 )
 
 # --------------------------------------------------
-# Header (UNCHANGED)
+# Header
 # --------------------------------------------------
 st.title("Bison Wealth 401(k) Growth Simulator")
 st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
 
 # --------------------------------------------------
-# Helpers / Projection / Inputs / Chart / CTA
-# --------------------------------------------------
-
-
 # Helpers
 # --------------------------------------------------
 def parse_number(x):
@@ -208,7 +174,11 @@ def compute_projection(age, salary, balance):
     target_age = 65
 
     if age >= target_age or salary <= 0:
-        return pd.DataFrame({"age": [age], "baseline": [balance], "with_help": [balance]})
+        return pd.DataFrame({
+            "age": [age],
+            "baseline": [balance],
+            "with_help": [balance]
+        })
 
     years = target_age - age
     num_points = years + 1
@@ -322,7 +292,7 @@ with right:
     st.subheader("Estimated 401(k) Growth")
 
     fig = go.Figure()
-
+    
     fig.add_trace(go.Scatter(
         x=df["age"],
         y=df["baseline"],
@@ -330,7 +300,7 @@ with right:
         name="On Your Lonesome (8.5%)",
         line=dict(color=baseline_color, width=3),
     ))
-    
+
     fig.add_trace(go.Scatter(
         x=df["age"],
         y=df["with_help"],
@@ -346,7 +316,6 @@ with right:
         text=[f"${df['baseline'].iloc[-1]:,.0f}"],
         textposition="top right",
         marker=dict(color=baseline_color, size=10),
-        name="Baseline Final",
         showlegend=False
     ))
 
@@ -357,7 +326,6 @@ with right:
         text=[f"${df['with_help'].iloc[-1]:,.0f}"],
         textposition="bottom right",
         marker=dict(color=help_color, size=10),
-        name="With Help Final",
         showlegend=False
     ))
 
@@ -372,21 +340,18 @@ with right:
             color=axis_color
         ),
         xaxis=dict(
-            title=dict(text="Age", font=dict(color=axis_color)),
+            title=dict(text="Age"),
             gridcolor=grid_color,
             zeroline=False,
-            tickfont=dict(color=axis_color),
             fixedrange=True,
         ),
         yaxis=dict(
-            title=dict(text="Portfolio Value ($)", font=dict(color=axis_color)),
+            title=dict(text="Portfolio Value ($)"),
             gridcolor=grid_color,
             zeroline=False,
-            tickfont=dict(color=axis_color),
             fixedrange=True,
         ),
         legend=dict(
-            font=dict(color=axis_color),
             bgcolor="rgba(0,0,0,0)"
         ),
         hovermode="x unified",
@@ -435,7 +400,6 @@ st.markdown(
 # --------------------------------------------------
 # Disclosure
 # --------------------------------------------------
-
 st.space("large")
 st.space("large")
 st.caption(
