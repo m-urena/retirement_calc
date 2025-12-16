@@ -326,6 +326,8 @@ st.markdown(
 # ==================================================
 # Disclosure
 # ==================================================
+st.space("large")
+st.space("large")
 st.caption(
     "For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contribution "
     "(7.8% employee, 4.6% employer). Performance without help is the 5-year annualized return of the "
