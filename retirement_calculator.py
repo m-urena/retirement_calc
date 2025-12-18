@@ -309,24 +309,30 @@ with right:
         line=dict(color=help_color, width=4),
     ))
 
+    x_max = df["age"].iloc[-1]
+    x_min = df["age"].iloc[0]
+    x_padding = 1 if len(df) > 1 else 0.5
+
     fig.add_trace(go.Scatter(
-        x=[df["age"].iloc[-1]],
+        x=[x_max],
         y=[df["baseline"].iloc[-1]],
         mode="markers+text",
         text=[f"${df['baseline'].iloc[-1]:,.0f}"],
         textposition="top right",
         marker=dict(color=baseline_color, size=10),
-        showlegend=False
+        showlegend=False,
+        cliponaxis=False,
     ))
 
     fig.add_trace(go.Scatter(
-        x=[df["age"].iloc[-1]],
+        x=[x_max],
         y=[df["with_help"].iloc[-1]],
         mode="markers+text",
         text=[f"${df['with_help'].iloc[-1]:,.0f}"],
         textposition="bottom right",
         marker=dict(color=help_color, size=10),
-        showlegend=False
+        showlegend=False,
+        cliponaxis=False,
     ))
 
     fig.update_layout(
@@ -344,6 +350,7 @@ with right:
             gridcolor=grid_color,
             zeroline=False,
             fixedrange=True,
+            range=[x_min, x_max + x_padding],
         ),
         yaxis=dict(
             title=dict(text="Portfolio Value ($)"),
