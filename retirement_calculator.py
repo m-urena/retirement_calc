@@ -10,7 +10,7 @@ from pathlib import Path
 # --------------------------------------------------
 st.set_page_config(
     page_title="Bison Wealth 401(k) Growth Simulator",
-    page_icon="🦬",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -325,6 +325,8 @@ with right:
             fixedrange=True,
             range=[x_min, x_max + x_padding],
             tickfont=dict(color=axis_color),
+            showline=True,
+            linecolor=axis_color,
         ),
         yaxis=dict(
             title=dict(text="Portfolio Value ($)", font=dict(color=axis_color, size=13)),
@@ -332,6 +334,8 @@ with right:
             zeroline=False,
             fixedrange=True,
             tickfont=dict(color=axis_color),
+            showline=True,
+            linecolor=axis_color,
         ),
         hovermode="x unified",
     )
