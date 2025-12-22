@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 from datetime import datetime
 from supabase import create_client, Client
 from pathlib import Path
-import base64
 
 # --------------------------------------------------
 # Streamlit Page Config (iframe-ready)
@@ -26,9 +25,12 @@ st.markdown(
     footer { visibility: hidden; height: 0px; }
     #MainMenu { visibility: hidden; }
 
-    html, body {
+    :root { color-scheme: light; }
+
+    html, body, .stApp {
         overflow-x: hidden;
-        color-scheme: light;
+        background-color: white !important;
+        color: #111827;
     }
     </style>
     """,
@@ -43,8 +45,8 @@ paper_bg = "white"
 grid_color = "#E0E0E0"
 axis_color = "#000000"
 
-baseline_color = "#9CA3AF"   # neutral gray
-help_color = "#C17A49"       # Bison orange
+baseline_color = "#9CA3AF"
+help_color = "#C17A49"
 diff_color = help_color
 
 plot_template = "plotly_white"
@@ -122,36 +124,6 @@ def load_company_names():
     )
 
 # --------------------------------------------------
-# Logo (hidden on mobile)
-# --------------------------------------------------
-logo_path = Path(__file__).resolve().parent / "bison_logo.png"
-with open(logo_path, "rb") as f:
-    logo_b64 = base64.b64encode(f.read()).decode()
-
-st.markdown(
-    f"""
-    <style>
-    .bison-logo {{
-        position: absolute;
-        top: 70px;
-        right: 40px;
-        z-index: 10;
-    }}
-    @media (max-width: 768px) {{
-        .bison-logo {{
-            display: none;
-        }}
-    }}
-    </style>
-
-    <div class="bison-logo">
-        <img src="data:image/png;base64,{logo_b64}" width="150">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# --------------------------------------------------
 # Header
 # --------------------------------------------------
 st.title("Bison Wealth 401(k) Growth Simulator")
@@ -226,7 +198,7 @@ left, right = st.columns([1, 2])
 with left:
     st.subheader("Your Information")
 
-    age_input = st.number_input("Your Age", 18, 100, 42)
+    age_input = st.number_input("Age", 18, 100, 42)
     salary_input = parse_number(st.text_input("Current Annual Salary ($)", "84,000"))
     balance_input = parse_number(st.text_input("Current 401(k) Balance ($)", "76,500"))
 
@@ -292,13 +264,14 @@ with right:
     st.subheader("Estimated 401(k) Growth")
 
     fig = go.Figure()
-    
+
     fig.add_trace(go.Scatter(
         x=df["age"],
         y=df["baseline"],
         mode="lines",
         name="On Your Lonesome (8.5%)",
         line=dict(color=baseline_color, width=3),
+        showlegend=False,
     ))
 
     fig.add_trace(go.Scatter(
@@ -307,6 +280,7 @@ with right:
         mode="lines",
         name="With Bison by Your Side (11.8%)",
         line=dict(color=help_color, width=4),
+        showlegend=False,
     ))
 
     x_max = df["age"].iloc[-1]
@@ -319,7 +293,7 @@ with right:
         mode="markers+text",
         text=[f"${df['baseline'].iloc[-1]:,.0f}"],
         textposition="top left",
-        textfont=dict(size=14),
+        textfont=dict(size=14, color=axis_color),
         marker=dict(color=baseline_color, size=10),
         showlegend=False,
         cliponaxis=False,
@@ -331,7 +305,7 @@ with right:
         mode="markers+text",
         text=[f"${df['with_help'].iloc[-1]:,.0f}"],
         textposition="middle left",
-        textfont=dict(size=14),
+        textfont=dict(size=14, color=axis_color),
         marker=dict(color=help_color, size=10),
         showlegend=False,
         cliponaxis=False,
@@ -339,35 +313,83 @@ with right:
 
     fig.update_layout(
         height=450,
-        margin=dict(l=20, r=20, t=20, b=40),
+        margin=dict(l=24, r=16, t=20, b=55),
         plot_bgcolor=plot_bg,
         paper_bgcolor=paper_bg,
         template=plot_template,
-        font=dict(
-            family="Montserrat",
-            color=axis_color
-        ),
+        font=dict(family="Montserrat", color=axis_color),
         xaxis=dict(
-            title=dict(text="Age"),
+            title=dict(text="Age", font=dict(color=axis_color, size=13)),
             gridcolor=grid_color,
             zeroline=False,
             fixedrange=True,
             range=[x_min, x_max + x_padding],
+            tickfont=dict(color=axis_color),
         ),
         yaxis=dict(
-            title=dict(text="Portfolio Value ($)"),
+            title=dict(text="Portfolio Value ($)", font=dict(color=axis_color, size=13)),
             gridcolor=grid_color,
             zeroline=False,
             fixedrange=True,
-        ),
-        legend=dict(
-            bgcolor="rgba(0,0,0,0)"
+            tickfont=dict(color=axis_color),
         ),
         hovermode="x unified",
-        dragmode=False,
     )
 
-    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    # Responsive legend under the chart (stacks on small screens)
+    st.markdown(
+        f"""
+        <style>
+        .bw-legend {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 22px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }}
+        .bw-legend-item {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #000000;
+            white-space: nowrap;
+        }}
+        .bw-swatch {{
+            width: 34px;
+            height: 4px;
+            border-radius: 2px;
+            display: inline-block;
+        }}
+        @media (max-width: 640px) {{
+            .bw-legend {{
+                flex-direction: column;
+                gap: 10px;
+            }}
+            .bw-legend-item {{
+                white-space: normal;
+                justify-content: center;
+                text-align: center;
+            }}
+        }}
+        </style>
+
+        <div class="bw-legend">
+            <div class="bw-legend-item">
+                <span class="bw-swatch" style="background:{baseline_color};"></span>
+                On Your Lonesome (8.5%)
+            </div>
+            <div class="bw-legend-item">
+                <span class="bw-swatch" style="background:{help_color};"></span>
+                With Bison by Your Side (11.8%)
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # --------------------------------------------------
 # CTA
