@@ -347,8 +347,7 @@ with right:
             x=0.5,
             font=dict(color="#111827")
         ),
-        hovermode="x unified",
-        dragmode=False,
+        hovermode="x unified"
     )
 
     st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
