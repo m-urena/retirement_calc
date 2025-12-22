@@ -322,7 +322,10 @@ with right:
             color=axis_color
         ),
         xaxis=dict(
-            title=dict(text="Age"),
+            title=dict(
+                text="Age",
+                font=dict(color="#111827", size=13)
+            ),
             gridcolor=grid_color,
             zeroline=False,
             fixedrange=True,
@@ -331,7 +334,10 @@ with right:
             tickfont=dict(color="#1F2937"),
         ),
         yaxis=dict(
-            title=dict(text="Portfolio Value ($)"),
+            title=dict(
+                text="Portfolio Value ($)",
+                font=dict(color="#111827", size=13)
+            ),
             gridcolor=grid_color,
             zeroline=False,
             fixedrange=True,
