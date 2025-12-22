@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from supabase import create_client, Client
 from pathlib import Path
+import base64
 
 # --------------------------------------------------
 # Streamlit Page Config (iframe-ready)
@@ -25,14 +26,9 @@ st.markdown(
     footer { visibility: hidden; height: 0px; }
     #MainMenu { visibility: hidden; }
 
-    :root {
-        color-scheme: light;
-    }
-
-    html, body, .stApp {
+    html, body {
         overflow-x: hidden;
-        background-color: white !important;
-        color: #111827;
+        color-scheme: light;
     }
     </style>
     """,
@@ -126,6 +122,36 @@ def load_company_names():
     )
 
 # --------------------------------------------------
+# Logo (hidden on mobile)
+# --------------------------------------------------
+logo_path = Path(__file__).resolve().parent / "bison_logo.png"
+with open(logo_path, "rb") as f:
+    logo_b64 = base64.b64encode(f.read()).decode()
+
+st.markdown(
+    f"""
+    <style>
+    .bison-logo {{
+        position: absolute;
+        top: 70px;
+        right: 40px;
+        z-index: 10;
+    }}
+    @media (max-width: 768px) {{
+        .bison-logo {{
+            display: none;
+        }}
+    }}
+    </style>
+
+    <div class="bison-logo">
+        <img src="data:image/png;base64,{logo_b64}" width="150">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# --------------------------------------------------
 # Header
 # --------------------------------------------------
 st.title("Bison Wealth 401(k) Growth Simulator")
@@ -200,7 +226,7 @@ left, right = st.columns([1, 2])
 with left:
     st.subheader("Your Information")
 
-    age_input = st.number_input("Age", 18, 100, 42)
+    age_input = st.number_input("Your Age", 18, 100, 42)
     salary_input = parse_number(st.text_input("Current Annual Salary ($)", "84,000"))
     balance_input = parse_number(st.text_input("Current 401(k) Balance ($)", "76,500"))
 
@@ -313,7 +339,7 @@ with right:
 
     fig.update_layout(
         height=450,
-        margin=dict(l=20, r=8, t=20, b=80),
+        margin=dict(l=20, r=20, t=20, b=40),
         plot_bgcolor=plot_bg,
         paper_bgcolor=paper_bg,
         template=plot_template,
@@ -322,38 +348,23 @@ with right:
             color=axis_color
         ),
         xaxis=dict(
-            title=dict(
-                text="Age",
-                font=dict(color="#111827", size=13)
-            ),
+            title=dict(text="Age"),
             gridcolor=grid_color,
             zeroline=False,
             fixedrange=True,
             range=[x_min, x_max + x_padding],
-            titlefont=dict(color="#111827", size=13),
-            tickfont=dict(color="#1F2937"),
         ),
         yaxis=dict(
-            title=dict(
-                text="Portfolio Value ($)",
-                font=dict(color="#111827", size=13)
-            ),
+            title=dict(text="Portfolio Value ($)"),
             gridcolor=grid_color,
             zeroline=False,
             fixedrange=True,
-            titlefont=dict(color="#111827", size=13),
-            tickfont=dict(color="#1F2937"),
         ),
         legend=dict(
-            bgcolor="rgba(0,0,0,0)",
-            orientation="h",
-            yanchor="top",
-            y=-0.25,
-            xanchor="center",
-            x=0.5,
-            font=dict(color="#111827")
+            bgcolor="rgba(0,0,0,0)"
         ),
         hovermode="x unified",
+        dragmode=False,
     )
 
     st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
