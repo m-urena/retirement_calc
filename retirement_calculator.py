@@ -330,6 +330,7 @@ with right:
             zeroline=False,
             fixedrange=True,
             range=[x_min, x_max + x_padding],
+            titlefont=dict(color="#111827", size=13),
             tickfont=dict(color="#1F2937"),
         ),
         yaxis=dict(
@@ -340,6 +341,7 @@ with right:
             gridcolor=grid_color,
             zeroline=False,
             fixedrange=True,
+            titlefont=dict(color="#111827", size=13),
             tickfont=dict(color="#1F2937"),
         ),
         legend=dict(
