@@ -10,7 +10,7 @@ from pathlib import Path
 # --------------------------------------------------
 st.set_page_config(
     page_title="Bison Wealth 401(k) Growth Simulator",
-    page_icon="🦬",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -60,6 +60,25 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
     html, body, [class*="css"] {
         font-family: 'Montserrat', sans-serif;
+    }
+
+    /* Keep form controls light even in dark environments */
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select,
+    .stTextInput input,
+    .stNumberInput input,
+    .stSelectbox [data-baseweb="select"] {
+        background-color: #ffffff !important;
+        color: #111827 !important;
+        border: 1px solid #D1D5DB !important;
+    }
+
+    /* Placeholder text should also stay readable */
+    ::placeholder {
+        color: #6B7280 !important;
+        opacity: 1 !important;
     }
 
     div.stButton > button:first-child {
@@ -325,6 +344,8 @@ with right:
             fixedrange=True,
             range=[x_min, x_max + x_padding],
             tickfont=dict(color=axis_color),
+            showline=True,
+            linecolor=axis_color,
         ),
         yaxis=dict(
             title=dict(text="Portfolio Value ($)", font=dict(color=axis_color, size=13)),
@@ -332,6 +353,8 @@ with right:
             zeroline=False,
             fixedrange=True,
             tickfont=dict(color=axis_color),
+            showline=True,
+            linecolor=axis_color,
         ),
         hovermode="x unified",
     )
