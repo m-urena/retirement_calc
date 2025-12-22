@@ -317,30 +317,33 @@ with right:
         plot_bgcolor=plot_bg,
         paper_bgcolor=paper_bg,
         template=plot_template,
-        font=dict(family="Montserrat", color=axis_color),
-        hovermode="x unified",
-    )
-
-    fig.update_xaxes(
-        title_text="Age",
-        title_font=dict(color="#111827", size=13),
-        gridcolor=grid_color,
-        zeroline=False,
-        fixedrange=True,
-        range=[x_min, x_max + x_padding],
-        tickfont=dict(color="#1F2937"),
-    )
-
-    fig.update_yaxes(
-        title_text="Portfolio Value ($)",
-        title_font=dict(color="#111827", size=13),
-        gridcolor=grid_color,
-        zeroline=False,
-        fixedrange=True,
-        tickfont=dict(color="#1F2937"),
-    )
-
-    fig.update_layout(
+        font=dict(
+            family="Montserrat",
+            color=axis_color
+        ),
+        xaxis=dict(
+            title=dict(
+                text="Age",
+                font=dict(color="#111827", size=13)
+            ),
+            gridcolor=grid_color,
+            zeroline=False,
+            fixedrange=True,
+            range=[x_min, x_max + x_padding],
+            titlefont=dict(color="#111827", size=13),
+            tickfont=dict(color="#1F2937"),
+        ),
+        yaxis=dict(
+            title=dict(
+                text="Portfolio Value ($)",
+                font=dict(color="#111827", size=13)
+            ),
+            gridcolor=grid_color,
+            zeroline=False,
+            fixedrange=True,
+            titlefont=dict(color="#111827", size=13),
+            tickfont=dict(color="#1F2937"),
+        ),
         legend=dict(
             bgcolor="rgba(0,0,0,0)",
             orientation="h",
@@ -349,7 +352,8 @@ with right:
             xanchor="center",
             x=0.5,
             font=dict(color="#111827")
-        )
+        ),
+        hovermode="x unified",
     )
 
     st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
