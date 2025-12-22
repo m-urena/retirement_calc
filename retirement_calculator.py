@@ -62,6 +62,25 @@ st.markdown(
         font-family: 'Montserrat', sans-serif;
     }
 
+    /* Keep form controls light even in dark environments */
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select,
+    .stTextInput input,
+    .stNumberInput input,
+    .stSelectbox [data-baseweb="select"] {
+        background-color: #ffffff !important;
+        color: #111827 !important;
+        border: 1px solid #D1D5DB !important;
+    }
+
+    /* Placeholder text should also stay readable */
+    ::placeholder {
+        color: #6B7280 !important;
+        opacity: 1 !important;
+    }
+
     div.stButton > button:first-child {
         background-color: #C17A49;
         color: white;
