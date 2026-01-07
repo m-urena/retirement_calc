@@ -157,7 +157,7 @@ def compute_projection(age, salary, balance):
 
     salary_growth_rate = 0.03
     contribution_rate = 0.078 + 0.046
-    r_no_help = 0.0847
+    r_no_help = 0.0819 # 5year Annualized as of Dec 31, 2025 for S&P 2035 Target Date Index
     r_help = r_no_help + 0.0332
 
     salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(num_points)]
@@ -380,11 +380,11 @@ with right:
         <div class="bw-legend">
             <div class="bw-legend-item">
                 <span class="bw-swatch" style="background:{baseline_color};"></span>
-                On Your Lonesome (8.5%)
+                On Your Lonesome (8.2%)
             </div>
             <div class="bw-legend-item">
                 <span class="bw-swatch" style="background:{help_color};"></span>
-                With Bison by Your Side (11.8%)
+                With Bison by Your Side (11.5%)
             </div>
         </div>
         """,
@@ -436,5 +436,5 @@ st.space("large")
 st.caption(
     "For illustrative purposes only. Assumes 3% annual salary growth and 12.4% annual contribution "
     "(7.8% employee, 4.6% employer). Performance without help is the 5-year annualized return of the "
-    "S&P Target Date 2035 Index. With help is increased by 3.32% based on the Hewitt Study."
+    "S&P Target Date 2035 Index as of Dec 31, 2025. With help is increased by 3.32% based on the Hewitt Study."
 )
