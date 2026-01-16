@@ -82,7 +82,7 @@ CONTRIB_FREQ_OPTIONS = {
 }
 
 
-def build_monthly_deposit_schedule(annual_amount: float, deposits_per_year: int, timing: str) -> list[float]:
+def build_monthly_deposit_schedule(annual_amount: float, deposits_per_year: int) -> list[float]:
     sched = [0.0] * 12
     if deposits_per_year == 12:
         months = list(range(12))
@@ -93,9 +93,6 @@ def build_monthly_deposit_schedule(annual_amount: float, deposits_per_year: int,
     else:
         months = [11]
         amt = annual_amount
-
-    if timing == "beginning":
-        months = [max(0, m - 1) for m in months]
 
     for m in months:
         sched[m] += amt
@@ -119,7 +116,6 @@ def compute_projection(age: int, salary: float, balance: float, cfg: Dict[str, A
     monthly_r = (1.0 + annual_return) ** (1.0 / 12.0) - 1.0
 
     deposits_per_year = int(cfg["contributions_per_year"])
-    timing = cfg["contribution_timing"]
 
     total = float(balance)
     ages = [age]
@@ -128,15 +124,11 @@ def compute_projection(age: int, salary: float, balance: float, cfg: Dict[str, A
     for yr in range(1, years + 1):
         current_salary = salary * ((1.0 + salary_growth) ** (yr - 1))
         annual_contrib_amount = current_salary * annual_contrib_rate
-        deposit_schedule = build_monthly_deposit_schedule(annual_contrib_amount, deposits_per_year, timing)
+        deposit_schedule = build_monthly_deposit_schedule(annual_contrib_amount, deposits_per_year)
 
         for m in range(12):
-            if timing == "beginning":
-                total += deposit_schedule[m]
-                total *= (1.0 + monthly_r)
-            else:
-                total *= (1.0 + monthly_r)
-                total += deposit_schedule[m]
+            total *= (1.0 + monthly_r)
+            total += deposit_schedule[m]
 
         ages.append(age + yr)
         balances.append(total)
@@ -155,7 +147,6 @@ cfg.setdefault("salary_growth_rate_pct", 3.0)
 cfg.setdefault("employee_contrib_rate_pct", 7.8)
 cfg.setdefault("employer_contrib_rate_pct", 4.6)
 
-cfg.setdefault("contribution_timing", "end")
 cfg.setdefault("contrib_frequency_label", "Monthly (12x/year)")
 cfg.setdefault("contributions_per_year", CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
 
@@ -211,16 +202,9 @@ with left:
             "Contribution frequency",
             list(CONTRIB_FREQ_OPTIONS.keys()),
             index=list(CONTRIB_FREQ_OPTIONS.keys()).index(cfg["contrib_frequency_label"]),
-            help="Annual contribution rate stays the same. This only changes when deposits hit the account.",
+            help="Annual contribution rate stays the same. This only changes when deposits hit the account (end of the month).",
         )
         cfg["contributions_per_year"] = int(CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
-
-        cfg["contribution_timing"] = st.selectbox(
-            "Contribution timing",
-            ["end", "beginning"],
-            index=0 if cfg["contribution_timing"] == "end" else 1,
-            help="Beginning means deposits go in before that month's growth. End means after that month's growth.",
-        )
 
     model_choice = st.selectbox(
         "Model selection",
@@ -254,6 +238,7 @@ df = compute_projection(
 )
 
 annual_return = float(cfg["model_return"])
+
 with right:
     st.subheader("Projected 401(k) Balance")
     st.caption(f"{cfg['model_name']} | Assumed return: {pct_from_decimal(annual_return)}")
@@ -325,8 +310,7 @@ st.caption(
     f"Salary growth: {pct_from_decimal(salary_growth_dec)}. "
     f"Annual contributions: {pct_from_decimal(total_contrib_dec)} "
     f"({pct_from_decimal(employee_dec)} employee, {pct_from_decimal(employer_dec)} employer). "
-    f"Deposit frequency: {cfg['contrib_frequency_label']}. "
-    f"Deposit timing: {cfg['contribution_timing']}. "
+    f"Deposit frequency: {cfg['contrib_frequency_label']} (deposited at end of deposit months). "
     f"Retirement age: {int(cfg['target_age'])}. "
     "Returns compound monthly; less frequent deposits enter later and therefore have less time to compound within each year."
 )
