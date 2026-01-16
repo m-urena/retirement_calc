@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from pathlib import Path
 from typing import Optional, Dict, Any
 
 st.set_page_config(
@@ -34,7 +33,6 @@ plot_bg = "white"
 paper_bg = "white"
 grid_color = "#E0E0E0"
 axis_color = "#000000"
-
 line_color = "#C17A49"
 plot_template = "plotly_white"
 
@@ -66,8 +64,22 @@ def parse_number(x: str) -> Optional[float]:
         return None
 
 
-def _pct(x: float) -> str:
+def _pct_from_decimal(x: float) -> str:
     return f"{x*100:.1f}%"
+
+
+MODEL_OPTIONS = {
+    "Model 1 (10.0%)": 0.10,
+    "Model 2 (11.0%)": 0.11,
+    "Model 3 (12.0%)": 0.12,
+    "Model 4 (13.0%)": 0.13,
+}
+
+CONTRIB_FREQ_OPTIONS = {
+    "Monthly (12x/year)": 12,
+    "Quarterly (4x/year)": 4,
+    "Yearly (1x/year)": 1,
+}
 
 
 @st.cache_data(show_spinner=False)
@@ -79,44 +91,31 @@ def compute_projection(age: int, salary: float, balance: float, cfg: Dict[str, A
     years = target_age - age
     num_points = years + 1
 
-    salary_growth_rate = float(cfg["salary_growth_rate"])
+    salary_growth_rate = float(cfg["salary_growth_rate_pct"]) / 100.0
 
-    employee_contrib_rate = float(cfg["employee_contrib_rate"])
-    employer_contrib_rate = float(cfg["employer_contrib_rate"])
-    contribution_rate = employee_contrib_rate + employer_contrib_rate
+    employee_contrib_rate = float(cfg["employee_contrib_rate_pct"]) / 100.0
+    employer_contrib_rate = float(cfg["employer_contrib_rate_pct"]) / 100.0
+    annual_contribution_rate = employee_contrib_rate + employer_contrib_rate
 
     annual_return = float(cfg["model_return"])
-
-    comp_per_year = int(cfg["compounding_per_year"])
     contrib_per_year = int(cfg["contributions_per_year"])
     timing = cfg["contribution_timing"]
 
     salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(num_points)]
-    annual_contribs = [s * contribution_rate for s in salaries]
+    annual_contribs = [s * annual_contribution_rate for s in salaries]
 
     def project(start: float, yearly_contribs: list[float], rate: float) -> list[float]:
         total = start
         out = [start]
 
-        per_period_rate = (1 + rate) ** (1 / comp_per_year)
-        growth_factor = per_period_rate ** comp_per_year
-
-        periods_per_contrib = max(1, comp_per_year // max(1, contrib_per_year))
-        contrib_growth_factor = per_period_rate ** periods_per_contrib
-
-        if abs(contrib_growth_factor - 1.0) < 1e-12:
-            contrib_annuity_factor = float(periods_per_contrib)
-        else:
-            contrib_annuity_factor = (contrib_growth_factor - 1.0) / (per_period_rate - 1.0)
-
         for yearly in yearly_contribs:
-            total = total * growth_factor
+            total *= (1 + rate)
 
             per_contrib = yearly / contrib_per_year
             if timing == "beginning":
-                total += per_contrib * (contrib_annuity_factor * contrib_per_year) * per_period_rate
+                total += yearly
             else:
-                total += per_contrib * (contrib_annuity_factor * contrib_per_year)
+                total += yearly
 
             out.append(total)
 
@@ -137,32 +136,17 @@ st.session_state.setdefault("cfg", {})
 cfg = st.session_state.cfg
 
 cfg.setdefault("target_age", 65)
-cfg.setdefault("salary_growth_rate", 0.03)
+cfg.setdefault("salary_growth_rate_pct", 3.0)
 
-cfg.setdefault("employee_contrib_rate", 0.078)
-cfg.setdefault("employer_contrib_rate", 0.046)
+cfg.setdefault("employee_contrib_rate_pct", 7.8)
+cfg.setdefault("employer_contrib_rate_pct", 4.6)
 
-cfg.setdefault("compounding_per_year", 12)
 cfg.setdefault("contribution_timing", "end")
-
-cfg.setdefault("model_name", "Model 1 (10.0%)")
-cfg.setdefault("model_return", 0.10)
-
-MODEL_OPTIONS = {
-    "Model 1 (10.0%)": 0.10,
-    "Model 2 (11.0%)": 0.11,
-    "Model 3 (12.0%)": 0.12,
-    "Model 4 (13.0%)": 0.13,
-}
-
-CONTRIB_FREQ_OPTIONS = {
-    "Monthly (12x/year)": 12,
-    "Quarterly (4x/year)": 4,
-    "Yearly (1x/year)": 1,
-}
-
 cfg.setdefault("contrib_frequency_label", "Monthly (12x/year)")
 cfg.setdefault("contributions_per_year", CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
+
+cfg.setdefault("model_name", "Model 1 (10.0%)")
+cfg.setdefault("model_return", MODEL_OPTIONS[cfg["model_name"]])
 
 st.title("Internal Retire Calc")
 
@@ -172,7 +156,6 @@ with left:
     st.subheader("Inputs")
 
     age_input = st.number_input("Current age", 18, 100, int(st.session_state.age_used))
-
     target_age_input = st.number_input(
         "Retirement age",
         min_value=max(40, int(age_input) + 1),
@@ -185,46 +168,41 @@ with left:
     balance_input = parse_number(st.text_input("Current 401(k) balance ($)", f"{st.session_state.balance_used:,.0f}"))
 
     with st.expander("Assumptions", expanded=False):
-        cfg["salary_growth_rate"] = st.number_input(
-            "Annual salary growth rate",
+        cfg["salary_growth_rate_pct"] = st.number_input(
+            "Annual salary growth (%)",
             0.0,
-            0.20,
-            float(cfg["salary_growth_rate"]),
-            step=0.005,
-            format="%.3f",
+            20.0,
+            float(cfg["salary_growth_rate_pct"]),
+            step=0.25,
         )
 
-        cfg["employee_contrib_rate"] = st.number_input(
-            "Employee contribution rate",
+        cfg["employee_contrib_rate_pct"] = st.number_input(
+            "Employee contribution rate (%)",
             0.0,
-            0.50,
-            float(cfg["employee_contrib_rate"]),
-            step=0.001,
-            format="%.3f",
+            50.0,
+            float(cfg["employee_contrib_rate_pct"]),
+            step=0.25,
         )
 
-        cfg["employer_contrib_rate"] = st.number_input(
-            "Employer contribution rate",
+        cfg["employer_contrib_rate_pct"] = st.number_input(
+            "Employer contribution rate (%)",
             0.0,
-            0.50,
-            float(cfg["employer_contrib_rate"]),
-            step=0.001,
-            format="%.3f",
-        )
-
-        cfg["compounding_per_year"] = st.number_input("Compounding periods per year", 1, 365, int(cfg["compounding_per_year"]))
-
-        cfg["contribution_timing"] = st.selectbox(
-            "Contribution timing",
-            ["end", "beginning"],
-            index=0 if cfg["contribution_timing"] == "end" else 1,
+            50.0,
+            float(cfg["employer_contrib_rate_pct"]),
+            step=0.25,
         )
 
         cfg["contrib_frequency_label"] = st.selectbox(
             "Contribution frequency",
             list(CONTRIB_FREQ_OPTIONS.keys()),
             index=list(CONTRIB_FREQ_OPTIONS.keys()).index(cfg["contrib_frequency_label"]),
-            help="Controls how often contributions are deposited (monthly, quarterly, yearly).",
+        )
+        cfg["contributions_per_year"] = int(CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
+
+        cfg["contribution_timing"] = st.selectbox(
+            "Contribution timing",
+            ["end", "beginning"],
+            index=0 if cfg["contribution_timing"] == "end" else 1,
         )
 
     model_choice = st.selectbox(
@@ -251,8 +229,6 @@ if calculate:
         cfg["model_name"] = model_choice
         cfg["model_return"] = float(MODEL_OPTIONS[model_choice])
 
-        cfg["contributions_per_year"] = int(CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
-
 df = compute_projection(
     int(st.session_state.age_used),
     float(st.session_state.salary_used),
@@ -262,11 +238,10 @@ df = compute_projection(
 
 annual_return = float(cfg["model_return"])
 title_model = cfg["model_name"]
-subtitle = f"{title_model} • Assumed return: {_pct(annual_return)}"
 
 with right:
     st.subheader("Projected 401(k) Balance")
-    st.caption(subtitle)
+    st.caption(f"{title_model} • Assumed return: {_pct_from_decimal(annual_return)}")
 
     fig = go.Figure()
 
@@ -325,15 +300,17 @@ with right:
 
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
+salary_growth_dec = float(cfg["salary_growth_rate_pct"]) / 100.0
+employee_dec = float(cfg["employee_contrib_rate_pct"]) / 100.0
+employer_dec = float(cfg["employer_contrib_rate_pct"]) / 100.0
+total_contrib_dec = employee_dec + employer_dec
+
 st.space("large")
-employee = float(cfg["employee_contrib_rate"])
-employer = float(cfg["employer_contrib_rate"])
-total_contrib = employee + employer
 st.caption(
     "Internal tool. "
-    f"Assumes {_pct(float(cfg['salary_growth_rate']))} annual salary growth and {_pct(total_contrib)} annual contribution "
-    f"({_pct(employee)} employee, {_pct(employer)} employer). "
-    f"Contribution frequency: {cfg['contrib_frequency_label']}. "
-    f"Compounding: {int(cfg['compounding_per_year'])}x/year. Contributions deposited at {cfg['contribution_timing']} of period. "
+    f"Assumes {_pct_from_decimal(salary_growth_dec)} annual salary growth and {_pct_from_decimal(total_contrib_dec)} annual contribution "
+    f"({_pct_from_decimal(employee_dec)} employee, {_pct_from_decimal(employer_dec)} employer). "
+    f"Contribution frequency: {cfg['contrib_frequency_label']} (same annualized contribution rate, deposited less frequently). "
+    f"Contribution timing: {cfg['contribution_timing']}. "
     f"Retirement age: {int(cfg['target_age'])}."
 )
