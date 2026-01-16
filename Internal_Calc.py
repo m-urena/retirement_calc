@@ -39,7 +39,6 @@ with_color = "#C17A49"
 
 plot_template = "plotly_white"
 
-
 st.markdown(
     """
     <style>
@@ -90,6 +89,7 @@ WITHOUT_HELP_RETURN = 0.0819
 
 def build_monthly_deposit_schedule(annual_amount: float, deposits_per_year: int) -> list[float]:
     sched = [0.0] * 12
+
     if deposits_per_year == 12:
         months = list(range(12))
         amt = annual_amount / 12.0
@@ -102,6 +102,7 @@ def build_monthly_deposit_schedule(annual_amount: float, deposits_per_year: int)
 
     for m in months:
         sched[m] += amt
+
     return sched
 
 
@@ -165,8 +166,9 @@ cfg.setdefault("employer_contrib_rate_pct", 4.6)
 cfg.setdefault("contrib_frequency_label", "Monthly (12x/year)")
 cfg.setdefault("contributions_per_year", CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
 
-cfg.setdefault("model_name", "Model 1 (10.00%)")
-cfg.setdefault("model_return", MODEL_OPTIONS[cfg["model_name"]])
+if cfg.get("model_name") not in MODEL_OPTIONS:
+    cfg["model_name"] = list(MODEL_OPTIONS.keys())[0]
+cfg["model_return"] = float(MODEL_OPTIONS[cfg["model_name"]])
 
 st.title("Internal Retire Calc")
 
@@ -221,7 +223,7 @@ with left:
         )
         cfg["contributions_per_year"] = int(CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
 
-        st.caption(f'Baseline comparison line "Without Help" is fixed at {pct_from_decimal(WITHOUT_HELP_RETURN)} annual return.')
+        st.caption(f'Comparison line "Without Help" is fixed at {pct_from_decimal(WITHOUT_HELP_RETURN)} annual return.')
 
     model_choice = st.selectbox(
         "Model selection",
@@ -275,7 +277,7 @@ with right:
             x=df["age"],
             y=df["with_model"],
             mode="lines",
-            name=f"{cfg['model_name']}",
+            name=f"{cfg['model_name']} ({pct_from_decimal(float(cfg['model_return']))})",
             line=dict(color=with_color, width=4),
             showlegend=False,
         )
@@ -385,7 +387,7 @@ with right:
             </div>
             <div class="bw-legend-item">
                 <span class="bw-swatch" style="background:{with_color};"></span>
-                {cfg["model_name"]}
+                {cfg["model_name"]} ({pct_from_decimal(float(cfg["model_return"]))})
             </div>
         </div>
         """,
