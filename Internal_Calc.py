@@ -33,8 +33,12 @@ plot_bg = "white"
 paper_bg = "white"
 grid_color = "#E0E0E0"
 axis_color = "#000000"
-line_color = "#C17A49"
+
+without_color = "#9CA3AF"
+with_color = "#C17A49"
+
 plot_template = "plotly_white"
+
 
 st.markdown(
     """
@@ -65,14 +69,14 @@ def parse_number(x: str) -> Optional[float]:
 
 
 def pct_from_decimal(x: float) -> str:
-    return f"{x*100:.1f}%"
+    return f"{x*100:.2f}%"
 
 
 MODEL_OPTIONS = {
-    "Model 1 (10.0%)": 0.10,
-    "Model 2 (11.0%)": 0.11,
-    "Model 3 (12.0%)": 0.12,
-    "Model 4 (13.0%)": 0.13,
+    "Core": 0.1126,
+    "Balanced Growth": 0.117,
+    "Growth": 0.1334,
+    "Aggressive": 0.141,
 }
 
 CONTRIB_FREQ_OPTIONS = {
@@ -80,6 +84,8 @@ CONTRIB_FREQ_OPTIONS = {
     "Quarterly (4x/year)": 4,
     "Yearly (1x/year)": 1,
 }
+
+WITHOUT_HELP_RETURN = 0.0819
 
 
 def build_monthly_deposit_schedule(annual_amount: float, deposits_per_year: int) -> list[float]:
@@ -100,10 +106,10 @@ def build_monthly_deposit_schedule(annual_amount: float, deposits_per_year: int)
 
 
 @st.cache_data(show_spinner=False)
-def compute_projection(age: int, salary: float, balance: float, cfg: Dict[str, Any]) -> pd.DataFrame:
+def compute_projection_two_lines(age: int, salary: float, balance: float, cfg: Dict[str, Any]) -> pd.DataFrame:
     target_age = int(cfg["target_age"])
     if age >= target_age or salary <= 0:
-        return pd.DataFrame({"age": [age], "balance": [balance]})
+        return pd.DataFrame({"age": [age], "without_help": [balance], "with_model": [balance]})
 
     years = target_age - age
 
@@ -112,14 +118,19 @@ def compute_projection(age: int, salary: float, balance: float, cfg: Dict[str, A
     employer_rate = float(cfg["employer_contrib_rate_pct"]) / 100.0
     annual_contrib_rate = employee_rate + employer_rate
 
-    annual_return = float(cfg["model_return"])
-    monthly_r = (1.0 + annual_return) ** (1.0 / 12.0) - 1.0
+    model_return = float(cfg["model_return"])
+
+    r_month_without = (1.0 + WITHOUT_HELP_RETURN) ** (1.0 / 12.0) - 1.0
+    r_month_with = (1.0 + model_return) ** (1.0 / 12.0) - 1.0
 
     deposits_per_year = int(cfg["contributions_per_year"])
 
-    total = float(balance)
+    total_wo = float(balance)
+    total_w = float(balance)
+
     ages = [age]
-    balances = [total]
+    wo = [total_wo]
+    w = [total_w]
 
     for yr in range(1, years + 1):
         current_salary = salary * ((1.0 + salary_growth) ** (yr - 1))
@@ -127,13 +138,17 @@ def compute_projection(age: int, salary: float, balance: float, cfg: Dict[str, A
         deposit_schedule = build_monthly_deposit_schedule(annual_contrib_amount, deposits_per_year)
 
         for m in range(12):
-            total *= (1.0 + monthly_r)
-            total += deposit_schedule[m]
+            total_wo *= (1.0 + r_month_without)
+            total_wo += deposit_schedule[m]
+
+            total_w *= (1.0 + r_month_with)
+            total_w += deposit_schedule[m]
 
         ages.append(age + yr)
-        balances.append(total)
+        wo.append(total_wo)
+        w.append(total_w)
 
-    return pd.DataFrame({"age": ages, "balance": balances})
+    return pd.DataFrame({"age": ages, "without_help": wo, "with_model": w})
 
 
 st.session_state.setdefault("age_used", 42)
@@ -150,7 +165,7 @@ cfg.setdefault("employer_contrib_rate_pct", 4.6)
 cfg.setdefault("contrib_frequency_label", "Monthly (12x/year)")
 cfg.setdefault("contributions_per_year", CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
 
-cfg.setdefault("model_name", "Model 1 (10.0%)")
+cfg.setdefault("model_name", "Model 1 (10.00%)")
 cfg.setdefault("model_return", MODEL_OPTIONS[cfg["model_name"]])
 
 st.title("Internal Retire Calc")
@@ -202,9 +217,11 @@ with left:
             "Contribution frequency",
             list(CONTRIB_FREQ_OPTIONS.keys()),
             index=list(CONTRIB_FREQ_OPTIONS.keys()).index(cfg["contrib_frequency_label"]),
-            help="Annual contribution rate stays the same. This only changes when deposits hit the account (end of the month).",
+            help="Annual contribution rate stays the same. This only changes when deposits hit the account (end of deposit months).",
         )
         cfg["contributions_per_year"] = int(CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
+
+        st.caption(f'Baseline comparison line "Without Help" is fixed at {pct_from_decimal(WITHOUT_HELP_RETURN)} annual return.')
 
     model_choice = st.selectbox(
         "Model selection",
@@ -230,26 +247,36 @@ if calculate:
         cfg["model_name"] = model_choice
         cfg["model_return"] = float(MODEL_OPTIONS[model_choice])
 
-df = compute_projection(
+df = compute_projection_two_lines(
     int(st.session_state.age_used),
     float(st.session_state.salary_used),
     float(st.session_state.balance_used),
     cfg,
 )
 
-annual_return = float(cfg["model_return"])
-
 with right:
     st.subheader("Projected 401(k) Balance")
-    st.caption(f"{cfg['model_name']} | Assumed return: {pct_from_decimal(annual_return)}")
 
     fig = go.Figure()
+
     fig.add_trace(
         go.Scatter(
             x=df["age"],
-            y=df["balance"],
+            y=df["without_help"],
             mode="lines",
-            line=dict(color=line_color, width=4),
+            name=f"Without Help ({pct_from_decimal(WITHOUT_HELP_RETURN)})",
+            line=dict(color=without_color, width=3),
+            showlegend=False,
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df["age"],
+            y=df["with_model"],
+            mode="lines",
+            name=f"{cfg['model_name']}",
+            line=dict(color=with_color, width=4),
             showlegend=False,
         )
     )
@@ -261,12 +288,26 @@ with right:
     fig.add_trace(
         go.Scatter(
             x=[x_max],
-            y=[df["balance"].iloc[-1]],
+            y=[df["without_help"].iloc[-1]],
             mode="markers+text",
-            text=[f"${df['balance'].iloc[-1]:,.0f}"],
+            text=[f"${df['without_help'].iloc[-1]:,.0f}"],
+            textposition="top left",
+            textfont=dict(size=14, color=axis_color),
+            marker=dict(color=without_color, size=10),
+            showlegend=False,
+            cliponaxis=False,
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=[x_max],
+            y=[df["with_model"].iloc[-1]],
+            mode="markers+text",
+            text=[f"${df['with_model'].iloc[-1]:,.0f}"],
             textposition="middle left",
             textfont=dict(size=14, color=axis_color),
-            marker=dict(color=line_color, size=10),
+            marker=dict(color=with_color, size=10),
             showlegend=False,
             cliponaxis=False,
         )
@@ -299,6 +340,58 @@ with right:
 
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
+    st.markdown(
+        f"""
+        <style>
+        .bw-legend {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 22px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }}
+        .bw-legend-item {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #000000;
+            white-space: nowrap;
+        }}
+        .bw-swatch {{
+            width: 34px;
+            height: 4px;
+            border-radius: 2px;
+            display: inline-block;
+        }}
+        @media (max-width: 640px) {{
+            .bw-legend {{
+                flex-direction: column;
+                gap: 10px;
+            }}
+            .bw-legend-item {{
+                white-space: normal;
+                justify-content: center;
+                text-align: center;
+            }}
+        }}
+        </style>
+
+        <div class="bw-legend">
+            <div class="bw-legend-item">
+                <span class="bw-swatch" style="background:{without_color};"></span>
+                Without Help ({pct_from_decimal(WITHOUT_HELP_RETURN)})
+            </div>
+            <div class="bw-legend-item">
+                <span class="bw-swatch" style="background:{with_color};"></span>
+                {cfg["model_name"]}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 salary_growth_dec = float(cfg["salary_growth_rate_pct"]) / 100.0
 employee_dec = float(cfg["employee_contrib_rate_pct"]) / 100.0
 employer_dec = float(cfg["employer_contrib_rate_pct"]) / 100.0
@@ -310,7 +403,7 @@ st.caption(
     f"Salary growth: {pct_from_decimal(salary_growth_dec)}. "
     f"Annual contributions: {pct_from_decimal(total_contrib_dec)} "
     f"({pct_from_decimal(employee_dec)} employee, {pct_from_decimal(employer_dec)} employer). "
-    f"Deposit frequency: {cfg['contrib_frequency_label']} (deposited at end of deposit months). "
+    f"Deposit frequency: {cfg['contrib_frequency_label']} (end of deposit months). "
     f"Retirement age: {int(cfg['target_age'])}. "
-    "Returns compound monthly; less frequent deposits enter later and therefore have less time to compound within each year."
+    f'Baseline "Without Help" return: {pct_from_decimal(WITHOUT_HELP_RETURN)}.'
 )
