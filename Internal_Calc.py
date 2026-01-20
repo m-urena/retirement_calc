@@ -72,10 +72,10 @@ def pct_from_decimal(x: float) -> str:
 
 
 MODEL_OPTIONS = {
-    "Core": 0.1126,
-    "Balanced Growth": 0.117,
-    "Growth": 0.1334,
-    "Aggressive": 0.141,
+    "Core": 0.1071,
+    "Balanced Growth": 0.1133,
+    "Growth": 0.1291,
+    "Aggressive": 0.1356,
 }
 
 CONTRIB_FREQ_OPTIONS = {
