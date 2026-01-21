@@ -79,31 +79,18 @@ MODEL_OPTIONS = {
 }
 
 CONTRIB_FREQ_OPTIONS = {
-    "Monthly (12x/year)": 12,
-    "Quarterly (4x/year)": 4,
-    "Yearly (1x/year)": 1,
+    "Semi-monthly (24x/year)": 24,
+    "Bi-weekly (26x/year)": 26,
 }
 
 WITHOUT_HELP_RETURN = 0.0819
 
 
-def build_monthly_deposit_schedule(annual_amount: float, deposits_per_year: int) -> list[float]:
-    sched = [0.0] * 12
-
-    if deposits_per_year == 12:
-        months = list(range(12))
-        amt = annual_amount / 12.0
-    elif deposits_per_year == 4:
-        months = [2, 5, 8, 11]
-        amt = annual_amount / 4.0
-    else:
-        months = [11]
-        amt = annual_amount
-
-    for m in months:
-        sched[m] += amt
-
-    return sched
+def build_pay_period_schedule(annual_amount: float, periods_per_year: int) -> list[float]:
+    if periods_per_year <= 0:
+        return []
+    amt = annual_amount / float(periods_per_year)
+    return [amt] * periods_per_year
 
 
 @st.cache_data(show_spinner=False)
@@ -120,11 +107,10 @@ def compute_projection_two_lines(age: int, salary: float, balance: float, cfg: D
     annual_contrib_rate = employee_rate + employer_rate
 
     model_return = float(cfg["model_return"])
+    periods_per_year = int(cfg["contributions_per_year"])
 
-    r_month_without = (1.0 + WITHOUT_HELP_RETURN) ** (1.0 / 12.0) - 1.0
-    r_month_with = (1.0 + model_return) ** (1.0 / 12.0) - 1.0
-
-    deposits_per_year = int(cfg["contributions_per_year"])
+    r_period_without = (1.0 + WITHOUT_HELP_RETURN) ** (1.0 / periods_per_year) - 1.0
+    r_period_with = (1.0 + model_return) ** (1.0 / periods_per_year) - 1.0
 
     total_wo = float(balance)
     total_w = float(balance)
@@ -136,14 +122,14 @@ def compute_projection_two_lines(age: int, salary: float, balance: float, cfg: D
     for yr in range(1, years + 1):
         current_salary = salary * ((1.0 + salary_growth) ** (yr - 1))
         annual_contrib_amount = current_salary * annual_contrib_rate
-        deposit_schedule = build_monthly_deposit_schedule(annual_contrib_amount, deposits_per_year)
+        contrib_schedule = build_pay_period_schedule(annual_contrib_amount, periods_per_year)
 
-        for m in range(12):
-            total_wo *= (1.0 + r_month_without)
-            total_wo += deposit_schedule[m]
+        for c in contrib_schedule:
+            total_wo *= (1.0 + r_period_without)
+            total_wo += c
 
-            total_w *= (1.0 + r_month_with)
-            total_w += deposit_schedule[m]
+            total_w *= (1.0 + r_period_with)
+            total_w += c
 
         ages.append(age + yr)
         wo.append(total_wo)
@@ -163,8 +149,8 @@ cfg.setdefault("salary_growth_rate_pct", 3.0)
 cfg.setdefault("employee_contrib_rate_pct", 7.8)
 cfg.setdefault("employer_contrib_rate_pct", 4.6)
 
-cfg.setdefault("contrib_frequency_label", "Monthly (12x/year)")
-cfg.setdefault("contributions_per_year", CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
+cfg.setdefault("contrib_frequency_label", "Bi-weekly (26x/year)")
+cfg.setdefault("contributions_per_year", CONTRIB_FREQ_OPTIONS.get(cfg["contrib_frequency_label"], 26))
 
 if cfg.get("model_name") not in MODEL_OPTIONS:
     cfg["model_name"] = list(MODEL_OPTIONS.keys())[0]
@@ -218,8 +204,10 @@ with left:
         cfg["contrib_frequency_label"] = st.selectbox(
             "Contribution frequency",
             list(CONTRIB_FREQ_OPTIONS.keys()),
-            index=list(CONTRIB_FREQ_OPTIONS.keys()).index(cfg["contrib_frequency_label"]),
-            help="Annual contribution rate stays the same. This only changes when deposits hit the account (end of deposit months).",
+            index=list(CONTRIB_FREQ_OPTIONS.keys()).index(cfg["contrib_frequency_label"])
+            if cfg["contrib_frequency_label"] in CONTRIB_FREQ_OPTIONS
+            else 0,
+            help="Annual contribution rate stays the same. Contributions are deposited at the end of each pay period.",
         )
         cfg["contributions_per_year"] = int(CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
 
@@ -405,7 +393,7 @@ st.caption(
     f"Salary growth: {pct_from_decimal(salary_growth_dec)}. "
     f"Annual contributions: {pct_from_decimal(total_contrib_dec)} "
     f"({pct_from_decimal(employee_dec)} employee, {pct_from_decimal(employer_dec)} employer). "
-    f"Deposit frequency: {cfg['contrib_frequency_label']} (end of deposit months). "
+    f"Contribution frequency: {cfg['contrib_frequency_label']} (deposited at end of each pay period). "
     f"Retirement age: {int(cfg['target_age'])}. "
     f'Baseline "Without Help" return: {pct_from_decimal(WITHOUT_HELP_RETURN)}.'
 )
