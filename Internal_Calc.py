@@ -76,7 +76,7 @@ MODEL_OPTIONS = {
     "Aggressive": 0.114,
 }
 
-MODEL_DROPDOWN_OPTIONS = ["All Models"] + list(MODEL_OPTIONS.keys())
+MODEL_DROPDOWN_OPTIONS = list(MODEL_OPTIONS.keys()) + ["All Models"]
 
 CONTRIB_FREQ_OPTIONS = {
     "Semi-monthly (24x/year)": 24,
