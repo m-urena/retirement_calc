@@ -136,12 +136,13 @@ cfg.setdefault("target_age", 65)
 cfg.setdefault("salary_growth_rate_pct", 3.0)
 cfg.setdefault("employee_contrib_rate_pct", 7.8)
 cfg.setdefault("employer_contrib_rate_pct", 4.6)
+cfg.setdefault("model_selection", "Core")
 
 cfg.setdefault("contrib_frequency_label", "Bi-weekly (26x/year)")
 cfg.setdefault("contributions_per_year", CONTRIB_FREQ_OPTIONS.get(cfg["contrib_frequency_label"], 26))
 
 if cfg.get("model_selection") not in MODEL_DROPDOWN_OPTIONS:
-    cfg["model_selection"] = MODEL_DROPDOWN_OPTIONS[0]
+    cfg["model_selection"] = "Core"
 
 st.title("Internal Retire Calc")
 
