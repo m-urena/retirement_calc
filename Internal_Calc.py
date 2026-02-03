@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from typing import Optional, Dict, Any
+from pathlib import Path
+import base64
 
 st.set_page_config(
     page_title="Internal Retire Calc",
@@ -37,26 +39,79 @@ axis_color = "#000000"
 with_color = "#C17A49"
 plot_template = "plotly_white"
 
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
-    html, body, [class*="css"] { font-family: 'Montserrat', sans-serif; }
+def _b64_file(path: Path) -> str:
+    return base64.b64encode(path.read_bytes()).decode("utf-8")
 
-    div.stButton > button:first-child {
-        background-color: #C17A49;
-        color: white;
-        border-color: #C17A49;
-    }
-    div.stButton > button:first-child:hover {
-        background-color: #A86B3D;
-        border-color: #A86B3D;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+def inject_brand_fonts():
+    font_dir = Path(__file__).resolve().parent / "Fonts"
 
+    body_font_path = font_dir / "Urbanist-VariableFont_wght.ttf"
+    headline_font_path = font_dir / "RethinkSans-VariableFont_wght.ttf"
+
+    if not body_font_path.exists() or not headline_font_path.exists():
+        st.warning("Font files not found in ./Fonts. Check folder name and filenames.")
+        return
+
+    body_b64 = _b64_file(body_font_path)
+    headline_b64 = _b64_file(headline_font_path)
+
+    st.markdown(
+        f"""
+        <style>
+        @font-face {{
+            font-family: "Urbanist";
+            src: url(data:font/ttf;base64,{body_b64}) format("truetype");
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }}
+
+        @font-face {{
+            font-family: "Rethink Sans";
+            src: url(data:font/ttf;base64,{headline_b64}) format("truetype");
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }}
+
+        html, body, .stApp, [class*="css"], [class*="st-"] {{
+            font-family: "Urbanist", sans-serif !important;
+            font-weight: 400 !important;
+        }}
+
+        h1,
+        .stTitle,
+        [data-testid="stMarkdownContainer"] h1 {{
+            font-family: "Rethink Sans", "Urbanist", sans-serif !important;
+            font-weight: 800 !important;
+        }}
+
+        h2, h3, h4, h5, h6,
+        .stHeader, .stSubheader,
+        [data-testid="stMarkdownContainer"] h2,
+        [data-testid="stMarkdownContainer"] h3,
+        [data-testid="stMarkdownContainer"] h4 {{
+            font-family: "Urbanist", sans-serif !important;
+            font-weight: 600 !important;
+        }}
+
+        div.stButton > button:first-child {{
+            background-color: #C17A49;
+            color: white;
+            border-color: #C17A49;
+            font-family: "Urbanist", sans-serif !important;
+            font-weight: 700 !important;
+        }}
+        div.stButton > button:first-child:hover {{
+            background-color: #A86B3D;
+            border-color: #A86B3D;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+inject_brand_fonts()
 
 def parse_number(x: str) -> Optional[float]:
     try:
@@ -64,10 +119,8 @@ def parse_number(x: str) -> Optional[float]:
     except Exception:
         return None
 
-
 def pct_from_decimal(x: float) -> str:
     return f"{x*100:.2f}%"
-
 
 MODEL_OPTIONS = {
     "Core": 0.083,
@@ -83,13 +136,11 @@ CONTRIB_FREQ_OPTIONS = {
     "Bi-weekly (26x/year)": 26,
 }
 
-
 def build_pay_period_schedule(annual_amount: float, periods_per_year: int) -> list[float]:
     if periods_per_year <= 0:
         return []
     amt = annual_amount / float(periods_per_year)
     return [amt] * periods_per_year
-
 
 @st.cache_data(show_spinner=False)
 def compute_projection_one_line(age: int, salary: float, balance: float, cfg: Dict[str, Any], model_return: float) -> pd.DataFrame:
@@ -124,7 +175,6 @@ def compute_projection_one_line(age: int, salary: float, balance: float, cfg: Di
         vals.append(total)
 
     return pd.DataFrame({"age": ages, "value": vals})
-
 
 st.session_state.setdefault("age_used", 42)
 st.session_state.setdefault("salary_used", 84000.0)
@@ -222,7 +272,6 @@ if calculate:
         cfg["target_age"] = int(target_age_input)
         cfg["model_selection"] = model_choice
 
-
 with right:
     st.subheader("Projected 401(k) Balance")
 
@@ -265,7 +314,7 @@ with right:
                     mode="markers+text",
                     text=[f"${dfi['value'].iloc[-1]:,.0f}"],
                     textposition="middle left",
-                    textfont=dict(size=14, color=axis_color),
+                    textfont=dict(size=14, color=axis_color, family="Urbanist"),
                     marker=dict(size=9),
                     showlegend=False,
                     cliponaxis=False,
@@ -304,7 +353,7 @@ with right:
                 mode="markers+text",
                 text=[f"${df['value'].iloc[-1]:,.0f}"],
                 textposition="middle left",
-                textfont=dict(size=14, color=axis_color),
+                textfont=dict(size=14, color=axis_color, family="Urbanist"),
                 marker=dict(color=with_color, size=10),
                 showlegend=False,
                 cliponaxis=False,
@@ -317,21 +366,21 @@ with right:
         plot_bgcolor=plot_bg,
         paper_bgcolor=paper_bg,
         template=plot_template,
-        font=dict(family="Montserrat", color=axis_color),
+        font=dict(family="Urbanist", color=axis_color),
         xaxis=dict(
-            title=dict(text="Age", font=dict(color=axis_color, size=13)),
+            title=dict(text="Age", font=dict(color=axis_color, size=13, family="Urbanist")),
             gridcolor=grid_color,
             zeroline=False,
             fixedrange=True,
             range=[x_min, x_max + x_padding],
-            tickfont=dict(color=axis_color),
+            tickfont=dict(color=axis_color, family="Urbanist"),
         ),
         yaxis=dict(
-            title=dict(text="Portfolio Value ($)", font=dict(color=axis_color, size=13)),
+            title=dict(text="Portfolio Value ($)", font=dict(color=axis_color, size=13, family="Urbanist")),
             gridcolor=grid_color,
             zeroline=False,
             fixedrange=True,
-            tickfont=dict(color=axis_color),
+            tickfont=dict(color=axis_color, family="Urbanist"),
         ),
         hovermode="x unified",
     )
