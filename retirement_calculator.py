@@ -21,47 +21,29 @@ st.set_page_config(
 # --------------------------------------------------
 st.markdown(
     """
-    <script>
-    (function () {
-      const selectors = [
-        '[data-testid="stToolbar"]',
-        '[data-testid="stAppToolbar"]',
-        '[data-testid="stStatusWidget"]',
-        '[data-testid="stHeader"]',
-        '[data-testid="stFloatingActionButton"]',
-        'div[data-testid="stToolbarActionButton"]',
-      ];
+    <style>
+    /* Hide ALL Streamlit chrome at the top */
+    header { visibility: hidden !important; height: 0 !important; }
+    [data-testid="stHeader"] { display: none !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    [data-testid="stToolbar"] { display: none !important; }
+    [data-testid="stAppToolbar"] { display: none !important; }
 
-      function nuke() {
-        try {
-          selectors.forEach((sel) => {
-            document.querySelectorAll(sel).forEach((el) => el.remove());
-          });
+    /* Hide sidebar collapse control that sometimes lives in the header area */
+    [data-testid="collapsedControl"] { display: none !important; }
 
-          // Extra fallback: remove any fixed bottom-right overlay that looks like a Streamlit control
-          document.querySelectorAll('div').forEach((el) => {
-            const style = window.getComputedStyle(el);
-            if (style.position === "fixed" && style.right === "16px" && style.bottom === "16px") {
-              el.remove();
-            }
-          });
-        } catch (e) {}
-      }
+    /* Keep your existing menu hide */
+    #MainMenu { visibility: hidden !important; }
+    footer { visibility: hidden !important; height: 0 !important; }
 
-      // Run now, and keep running as Streamlit re-renders
-      nuke();
-      const obs = new MutationObserver(nuke);
-      obs.observe(document.documentElement, { childList: true, subtree: true });
+    :root { color-scheme: light; }
 
-      // Also run a few times after load
-      let i = 0;
-      const iv = setInterval(() => {
-        nuke();
-        i += 1;
-        if (i > 20) clearInterval(iv);
-      }, 250);
-    })();
-    </script>
+    html, body, .stApp {
+        overflow-x: hidden;
+        background-color: white !important;
+        color: #111827;
+    }
+    </style>
     """,
     unsafe_allow_html=True,
 )
