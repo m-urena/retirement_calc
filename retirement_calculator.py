@@ -309,6 +309,14 @@ df = compute_projection(
 # --------------------------------------------------
 final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 
+# --------------------------------------------------
+# Calendly
+# --------------------------------------------------
+DEFAULT_CALENDLY = "https://calendly.com/placeholder"
+ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
+
+calendly_link = ALT_CALENDLY if company == "My Company Is Not Listed" else DEFAULT_CALENDLY
+
 with right:
     st.markdown(
         f"""
@@ -321,6 +329,9 @@ with right:
         unsafe_allow_html=True
     )
 
+    # --------------------------------------------------
+    # Chart
+    # --------------------------------------------------
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
@@ -345,29 +356,60 @@ with right:
     x_min = df["age"].iloc[0]
     x_padding = 1 if len(df) > 1 else 0.5
 
+    final_baseline = df["baseline"].iloc[-1]
+    final_help = df["with_help"].iloc[-1]
+
     fig.add_trace(go.Scatter(
         x=[x_max],
-        y=[df["baseline"].iloc[-1]],
-        mode="markers+text",
-        text=[f"${df['baseline'].iloc[-1]:,.0f}"],
-        textposition="top left",
-        textfont=dict(size=14, color=axis_color, family="Urbanist"),
-        marker=dict(color=baseline_color, size=10),
+        y=[final_baseline],
+        mode="markers",
+        marker=dict(color=baseline_color, size=9),
         showlegend=False,
         cliponaxis=False,
     ))
 
     fig.add_trace(go.Scatter(
         x=[x_max],
-        y=[df["with_help"].iloc[-1]],
-        mode="markers+text",
-        text=[f"${df['with_help'].iloc[-1]:,.0f}"],
-        textposition="middle left",
-        textfont=dict(size=14, color=axis_color, family="Urbanist"),
-        marker=dict(color=help_color, size=10),
+        y=[final_help],
+        mode="markers",
+        marker=dict(color=help_color, size=9),
         showlegend=False,
         cliponaxis=False,
     ))
+
+    fig.add_annotation(
+        xref="paper", yref="paper",
+        x=0.02, y=0.98,
+        xanchor="left", yanchor="top",
+        text=(
+            f"<span style='color:{help_color}; font-weight:700;'>With Bison:</span> "
+            f"<span style='font-weight:800;'>${final_help:,.0f}</span>"
+        ),
+        showarrow=False,
+        align="left",
+        font=dict(family="Urbanist", size=14, color=axis_color),
+        bgcolor="rgba(255,255,255,0.85)",
+        bordercolor="rgba(0,0,0,0.08)",
+        borderwidth=1,
+        borderpad=6,
+    )
+
+    fig.add_annotation(
+        xref="paper", yref="paper",
+        x=0.02, y=0.90,
+        xanchor="left", yanchor="top",
+        text=(
+            f"<span style='color:{baseline_color}; font-weight:700;'>Without Bison:</span> "
+            f"<span style='font-weight:800;'>${final_baseline:,.0f}</span>"
+        ),
+        showarrow=False,
+        align="left",
+        font=dict(family="Urbanist", size=14, color=axis_color),
+        bgcolor="rgba(255,255,255,0.85)",
+        bordercolor="rgba(0,0,0,0.08)",
+        borderwidth=1,
+        borderpad=6,
+    )
 
     fig.update_layout(
         height=450,
@@ -396,6 +438,9 @@ with right:
 
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
+    # --------------------------------------------------
+    # Legend (add extra spacing below legend so button doesn't crowd)
+    # --------------------------------------------------
     st.markdown(
         f"""
         <style>
@@ -406,6 +451,7 @@ with right:
             gap: 22px;
             flex-wrap: wrap;
             margin-top: 8px;
+            margin-bottom: 18px;
             font-family: "Urbanist", sans-serif;
             font-weight: 400;
         }}
@@ -450,28 +496,23 @@ with right:
         unsafe_allow_html=True
     )
 
-# --------------------------------------------------
-# Calendly (button updated to new orange too)
-# --------------------------------------------------
-DEFAULT_CALENDLY = "https://calendly.com/placeholder"
-ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
-
-calendly_link = ALT_CALENDLY if company == "My Company Is Not Listed" else DEFAULT_CALENDLY
-
-st.markdown(
-    f"""
-    <div style="text-align:center; margin-top:20px;">
-        <a href="{calendly_link}" target="_blank"
-           style="background-color:#F97113; color:white;
-                  padding:14px 28px; text-decoration:none;
-                  border-radius:8px; font-size:18px;
-                  font-family:'Urbanist', sans-serif; font-weight:700;">
-           Schedule a Conversation
-        </a>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+    # --------------------------------------------------
+    # Schedule button (add more space above it)
+    # --------------------------------------------------
+    st.markdown(
+        f"""
+        <div style="text-align:center; margin-top:26px;">
+            <a href="{calendly_link}" target="_blank"
+               style="background-color:#F97113; color:white;
+                      padding:14px 28px; text-decoration:none;
+                      border-radius:8px; font-size:18px;
+                      font-family:'Urbanist', sans-serif; font-weight:700;">
+               Schedule a Conversation
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # --------------------------------------------------
 # Disclosure
