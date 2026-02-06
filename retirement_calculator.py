@@ -47,6 +47,39 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+st.markdown(
+    """
+    <style>
+    /* Remove top whitespace caused by Streamlit container padding */
+    .block-container {
+        padding-top: 0rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    /* In some versions, the main container uses these testids */
+    [data-testid="stAppViewContainer"] {
+        padding-top: 0rem !important;
+    }
+    [data-testid="stMain"] {
+        padding-top: 0rem !important;
+    }
+
+    /* If the hidden header still reserves space, force it to zero */
+    [data-testid="stHeader"] {
+        height: 0px !important;
+        min-height: 0px !important;
+        margin: 0px !important;
+        padding: 0px !important;
+    }
+
+    /* Optional: tighten the very first element spacing */
+    [data-testid="stVerticalBlock"] {
+        gap: 0.25rem !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # --------------------------------------------------
