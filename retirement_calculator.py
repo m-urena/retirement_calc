@@ -24,6 +24,9 @@ st.markdown(
     <style>
     header { visibility: hidden; height: 0px; }
     footer { visibility: hidden; height: 0px; }
+    [data-testid="stAppToolbar"] { display: none !important; }
+    [data-testid="stToolbar"] { display: none !important; }
+    [data-testid="stStatusWidget"] { display: none !important; }
     #MainMenu { visibility: hidden; }
 
     :root { color-scheme: light; }
@@ -37,16 +40,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.markdown(
-    """
-    <style>
-    [data-testid="stAppToolbar"] { display: none !important; }
-    [data-testid="stToolbar"] { display: none !important; }
-    [data-testid="stStatusWidget"] { display: none !important; }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+
 
 # --------------------------------------------------
 # Brand fonts
