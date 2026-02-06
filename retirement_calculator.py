@@ -312,7 +312,7 @@ final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 # --------------------------------------------------
 # Calendly
 # --------------------------------------------------
-DEFAULT_CALENDLY = "https://calendly.com/placeholder"
+DEFAULT_CALENDLY = "https://powermy401k.com/contact-us/"
 ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
 
 calendly_link = ALT_CALENDLY if company == "My Company Is Not Listed" else DEFAULT_CALENDLY
