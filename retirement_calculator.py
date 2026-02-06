@@ -129,7 +129,7 @@ grid_color = "#E0E0E0"
 axis_color = "#000000"
 
 baseline_color = "#9CA3AF"
-help_color = "#C17A49"
+help_color = "#F97113"
 diff_color = help_color
 
 plot_template = "plotly_white"
@@ -244,7 +244,7 @@ def compute_projection(age, salary, balance):
 # --------------------------------------------------
 # Session Defaults
 # --------------------------------------------------
-st.session_state.setdefault("age_used", 42)
+st.session_state.setdefault("age_used", 41)
 st.session_state.setdefault("salary_used", 84000)
 st.session_state.setdefault("balance_used", 76500)
 
@@ -327,7 +327,7 @@ with right:
         x=df["age"],
         y=df["baseline"],
         mode="lines",
-        name="On Your Lonesome (8.5%)",
+        name="Average earnings without Bison (8.2%)",
         line=dict(color=baseline_color, width=3),
         showlegend=False,
     ))
@@ -336,7 +336,7 @@ with right:
         x=df["age"],
         y=df["with_help"],
         mode="lines",
-        name="With Bison by Your Side (11.8%)",
+        name="Average earnings with Bison Managed (11.5%)",
         line=dict(color=help_color, width=4),
         showlegend=False,
     ))
