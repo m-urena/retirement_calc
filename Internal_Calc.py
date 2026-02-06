@@ -12,9 +12,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# --------------------------------------------------
-# Global base styles
-# --------------------------------------------------
 st.markdown(
     """
     <style>
@@ -102,8 +99,6 @@ def inject_brand_fonts():
             font-weight: 600 !important;
         }}
 
-        /* Fix: expander arrow showing "arrow_drop_down" as text
-           This happens when global font overrides the Material Icons font. */
         .material-icons,
         .material-symbols-outlined,
         .material-symbols-rounded,
@@ -122,7 +117,6 @@ def inject_brand_fonts():
             -webkit-font-smoothing: antialiased !important;
         }}
 
-        /* Primary button (Calculate) */
         div.stButton > button:first-child {{
             background-color: {ACCENT};
             color: white;
@@ -139,7 +133,6 @@ def inject_brand_fonts():
             box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
         }}
 
-        /* Inputs: add orange focus ring and borders */
         input, textarea {{
             border-radius: 10px !important;
         }}
@@ -148,7 +141,6 @@ def inject_brand_fonts():
             box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
         }}
 
-        /* BaseWeb inputs (selectbox) */
         [data-baseweb="select"] > div {{
             border-radius: 10px !important;
         }}
@@ -157,14 +149,12 @@ def inject_brand_fonts():
             box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
         }}
 
-        /* Number input container focus */
         [data-testid="stNumberInput"] div:focus-within {{
             border-color: {ACCENT} !important;
             box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
             border-radius: 10px !important;
         }}
 
-        /* Expander styling */
         [data-testid="stExpander"] details {{
             border: 1px solid rgba(17, 24, 39, 0.12) !important;
             border-radius: 12px !important;
@@ -348,7 +338,6 @@ with right:
     st.subheader("Projected 401(k) Balance")
 
     fig = go.Figure()
-
     selected = cfg.get("model_selection", "All Models")
 
     if selected == "All Models":
@@ -367,6 +356,8 @@ with right:
         x_min = base_age.iloc[0]
         x_padding = 1 if len(base_age) > 1 else 0.5
 
+        final_lines = []
+
         for name, dfi in dfs.items():
             fig.add_trace(
                 go.Scatter(
@@ -378,20 +369,27 @@ with right:
                     showlegend=False,
                 )
             )
+            final_lines.append((name, float(dfi["value"].iloc[-1])))
 
-            fig.add_trace(
-                go.Scatter(
-                    x=[x_max],
-                    y=[dfi["value"].iloc[-1]],
-                    mode="markers+text",
-                    text=[f"${dfi['value'].iloc[-1]:,.0f}"],
-                    textposition="middle left",
-                    textfont=dict(size=14, color=axis_color, family="Urbanist"),
-                    marker=dict(size=9),
-                    showlegend=False,
-                    cliponaxis=False,
-                )
-            )
+        final_lines.sort(key=lambda t: t[1], reverse=True)
+
+        annotation_html = "<br>".join(
+            [f"<b>{name}:</b> ${val:,.0f}" for name, val in final_lines]
+        )
+
+        fig.add_annotation(
+            xref="paper", yref="paper",
+            x=0.02, y=0.98,
+            xanchor="left", yanchor="top",
+            text=annotation_html,
+            showarrow=False,
+            align="left",
+            font=dict(family="Urbanist", size=13, color=axis_color),
+            bgcolor="rgba(255,255,255,0.85)",
+            bordercolor="rgba(0,0,0,0.08)",
+            borderwidth=1,
+            borderpad=8,
+        )
 
     else:
         model_return = float(MODEL_OPTIONS[selected])
@@ -418,18 +416,20 @@ with right:
         x_min = df["age"].iloc[0]
         x_padding = 1 if len(df) > 1 else 0.5
 
-        fig.add_trace(
-            go.Scatter(
-                x=[x_max],
-                y=[df["value"].iloc[-1]],
-                mode="markers+text",
-                text=[f"${df['value'].iloc[-1]:,.0f}"],
-                textposition="middle left",
-                textfont=dict(size=14, color=axis_color, family="Urbanist"),
-                marker=dict(color=with_color, size=10),
-                showlegend=False,
-                cliponaxis=False,
-            )
+        final_val = float(df["value"].iloc[-1])
+
+        fig.add_annotation(
+            xref="paper", yref="paper",
+            x=0.02, y=0.98,
+            xanchor="left", yanchor="top",
+            text=f"<b>{selected}:</b> ${final_val:,.0f}",
+            showarrow=False,
+            align="left",
+            font=dict(family="Urbanist", size=13, color=axis_color),
+            bgcolor="rgba(255,255,255,0.85)",
+            bordercolor="rgba(0,0,0,0.08)",
+            borderwidth=1,
+            borderpad=8,
         )
 
     fig.update_layout(
