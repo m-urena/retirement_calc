@@ -40,11 +40,6 @@ st.markdown(
 
 # --------------------------------------------------
 # Brand fonts
-# Headline: Rethink Sans
-# Normal/UI: Urbanist
-# Files expected:
-#   Fonts/Urbanist-VariableFont_wght.ttf
-#   Fonts/RethinkSans-VariableFont_wght.ttf
 # --------------------------------------------------
 def _b64_file(path: Path) -> str:
     return base64.b64encode(path.read_bytes()).decode("utf-8")
@@ -103,15 +98,15 @@ def inject_brand_fonts():
         }}
 
         div.stButton > button:first-child {{
-            background-color: #C17A49;
+            background-color: #F97113;
             color: white;
-            border-color: #C17A49;
+            border-color: #F97113;
             font-family: "Urbanist", sans-serif !important;
             font-weight: 700 !important;
         }}
         div.stButton > button:first-child:hover {{
-            background-color: #A86B3D;
-            border-color: #A86B3D;
+            background-color: #E5620F;
+            border-color: #E5620F;
         }}
         </style>
         """,
@@ -326,9 +321,6 @@ with right:
         unsafe_allow_html=True
     )
 
-    # --------------------------------------------------
-    # Chart (no header/subheader/title)
-    # --------------------------------------------------
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
@@ -404,9 +396,6 @@ with right:
 
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    # --------------------------------------------------
-    # Legend text updates
-    # --------------------------------------------------
     st.markdown(
         f"""
         <style>
@@ -462,7 +451,7 @@ with right:
     )
 
 # --------------------------------------------------
-# Calendly
+# Calendly (button updated to new orange too)
 # --------------------------------------------------
 DEFAULT_CALENDLY = "https://calendly.com/placeholder"
 ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
@@ -473,7 +462,7 @@ st.markdown(
     f"""
     <div style="text-align:center; margin-top:20px;">
         <a href="{calendly_link}" target="_blank"
-           style="background-color:#C17A49; color:white;
+           style="background-color:#F97113; color:white;
                   padding:14px 28px; text-decoration:none;
                   border-radius:8px; font-size:18px;
                   font-family:'Urbanist', sans-serif; font-weight:700;">
