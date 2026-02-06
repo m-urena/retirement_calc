@@ -24,10 +24,25 @@ st.markdown(
     <style>
     header { visibility: hidden; height: 0px; }
     footer { visibility: hidden; height: 0px; }
-    [data-testid="stAppToolbar"] { display: none !important; }
-    [data-testid="stToolbar"] { display: none !important; }
-    [data-testid="stStatusWidget"] { display: none !important; }
     #MainMenu { visibility: hidden; }
+
+    /* Newer Streamlit floating UI */
+    [data-testid="stToolbar"] { display: none !important; }
+    [data-testid="stAppToolbar"] { display: none !important; }
+    [data-testid="stStatusWidget"] { display: none !important; }
+    [data-testid="stHeader"] { display: none !important; }
+
+    /* This is the bottom-right floating action area in many builds */
+    [data-testid="stFloatingActionButton"] { display: none !important; }
+
+    /* Fallbacks used across versions */
+    .st-emotion-cache-1jicfl2 { display: none !important; } /* sometimes the floating toolbar wrapper */
+    .st-emotion-cache-1f3w014 { display: none !important; } /* sometimes the status widget wrapper */
+
+    /* Last-resort: hide Streamlit's fixed bottom-right overlay container */
+    div[class*="st-emotion-cache"][style*="position: fixed"][style*="bottom:"] {
+      display: none !important;
+    }
 
     :root { color-scheme: light; }
 
