@@ -182,12 +182,6 @@ def load_company_names():
     )
 
 # --------------------------------------------------
-# Header
-# --------------------------------------------------
-st.title("Bison Wealth 401(k) Growth Simulator")
-st.write("Visualize how your 401(k) could grow **with and without Bison’s guidance.**")
-
-# --------------------------------------------------
 # Helpers
 # --------------------------------------------------
 def parse_number(x):
@@ -249,14 +243,14 @@ st.session_state.setdefault("salary_used", 84000)
 st.session_state.setdefault("balance_used", 76500)
 
 # --------------------------------------------------
-# Inputs
+# Inputs + Chart columns
 # --------------------------------------------------
 left, right = st.columns([1, 2])
 
 with left:
     st.subheader("Your Information")
 
-    age_input = st.number_input("Age", 18, 100, 42)
+    age_input = st.number_input("Age", 18, 100, 41)
     salary_input = parse_number(st.text_input("Current Annual Salary ($)", "84,000"))
     balance_input = parse_number(st.text_input("Current 401(k) Balance ($)", "76,500"))
 
@@ -316,11 +310,25 @@ df = compute_projection(
 )
 
 # --------------------------------------------------
-# Chart
+# CTA above the chart (top, centered over graph)
 # --------------------------------------------------
-with right:
-    st.subheader("Estimated 401(k) Growth")
+final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 
+with right:
+    st.markdown(
+        f"""
+        <div style="text-align:center; font-size:26px; margin-top:6px; margin-bottom:10px;
+                    font-family:'Urbanist', sans-serif; font-weight:600;">
+            Is <span style="font-weight:800; color:{diff_color};">
+            ${final_diff:,.0f}</span> worth 30 minutes of your time?
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # --------------------------------------------------
+    # Chart (no header/subheader/title)
+    # --------------------------------------------------
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
@@ -336,7 +344,7 @@ with right:
         x=df["age"],
         y=df["with_help"],
         mode="lines",
-        name="Average earnings with Bison Managed (11.5%)",
+        name="Average earnings with Bison Managed 401(k) (11.5%)",
         line=dict(color=help_color, width=4),
         showlegend=False,
     ))
@@ -396,6 +404,9 @@ with right:
 
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
+    # --------------------------------------------------
+    # Legend text updates
+    # --------------------------------------------------
     st.markdown(
         f"""
         <style>
@@ -439,31 +450,16 @@ with right:
         <div class="bw-legend">
             <div class="bw-legend-item">
                 <span class="bw-swatch" style="background:{baseline_color};"></span>
-                On Your Lonesome (8.2%)
+                Average earnings without Bison (8.2%)
             </div>
             <div class="bw-legend-item">
                 <span class="bw-swatch" style="background:{help_color};"></span>
-                With Bison by Your Side (11.5%)
+                Average earnings with Bison Managed 401(k) (11.5%)
             </div>
         </div>
         """,
         unsafe_allow_html=True
     )
-
-# --------------------------------------------------
-# CTA
-# --------------------------------------------------
-final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
-
-st.markdown(
-    f"""
-    <div style="text-align:center; font-size:26px; margin-top:20px; font-family:'Urbanist', sans-serif; font-weight:600;">
-        Is <span style="font-weight:800; color:{diff_color};">
-        ${final_diff:,.0f}</span> worth 30 minutes of your time?
-    </div>
-    """,
-    unsafe_allow_html=True
-)
 
 # --------------------------------------------------
 # Calendly
