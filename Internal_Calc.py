@@ -12,6 +12,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+# --------------------------------------------------
+# Global base styles
+# --------------------------------------------------
 st.markdown(
     """
     <style>
@@ -36,7 +39,11 @@ paper_bg = "white"
 grid_color = "#E0E0E0"
 axis_color = "#000000"
 
-with_color = "#C17A49"
+ACCENT = "#F97113"
+ACCENT_HOVER = "#E5620F"
+ACCENT_SOFT = "rgba(249, 113, 19, 0.10)"
+
+with_color = ACCENT
 plot_template = "plotly_white"
 
 def _b64_file(path: Path) -> str:
@@ -74,7 +81,7 @@ def inject_brand_fonts():
             font-display: swap;
         }}
 
-        html, body, .stApp, [class*="css"], [class*="st-"] {{
+        html, body, .stApp {{
             font-family: "Urbanist", sans-serif !important;
             font-weight: 400 !important;
         }}
@@ -95,16 +102,81 @@ def inject_brand_fonts():
             font-weight: 600 !important;
         }}
 
+        /* Fix: expander arrow showing "arrow_drop_down" as text
+           This happens when global font overrides the Material Icons font. */
+        .material-icons,
+        .material-symbols-outlined,
+        .material-symbols-rounded,
+        i.material-icons,
+        span.material-icons {{
+            font-family: "Material Icons" !important;
+            font-weight: normal !important;
+            font-style: normal !important;
+            letter-spacing: normal !important;
+            text-transform: none !important;
+            display: inline-block !important;
+            white-space: nowrap !important;
+            word-wrap: normal !important;
+            direction: ltr !important;
+            -webkit-font-feature-settings: "liga" !important;
+            -webkit-font-smoothing: antialiased !important;
+        }}
+
+        /* Primary button (Calculate) */
         div.stButton > button:first-child {{
-            background-color: #C17A49;
+            background-color: {ACCENT};
             color: white;
-            border-color: #C17A49;
+            border-color: {ACCENT};
             font-family: "Urbanist", sans-serif !important;
             font-weight: 700 !important;
         }}
         div.stButton > button:first-child:hover {{
-            background-color: #A86B3D;
-            border-color: #A86B3D;
+            background-color: {ACCENT_HOVER};
+            border-color: {ACCENT_HOVER};
+        }}
+        div.stButton > button:first-child:focus {{
+            outline: none !important;
+            box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
+        }}
+
+        /* Inputs: add orange focus ring and borders */
+        input, textarea {{
+            border-radius: 10px !important;
+        }}
+        input:focus, textarea:focus {{
+            border-color: {ACCENT} !important;
+            box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
+        }}
+
+        /* BaseWeb inputs (selectbox) */
+        [data-baseweb="select"] > div {{
+            border-radius: 10px !important;
+        }}
+        [data-baseweb="select"] > div:focus-within {{
+            border-color: {ACCENT} !important;
+            box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
+        }}
+
+        /* Number input container focus */
+        [data-testid="stNumberInput"] div:focus-within {{
+            border-color: {ACCENT} !important;
+            box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
+            border-radius: 10px !important;
+        }}
+
+        /* Expander styling */
+        [data-testid="stExpander"] details {{
+            border: 1px solid rgba(17, 24, 39, 0.12) !important;
+            border-radius: 12px !important;
+            overflow: hidden !important;
+        }}
+        [data-testid="stExpander"] summary {{
+            background: {ACCENT_SOFT} !important;
+            border-bottom: 1px solid rgba(17, 24, 39, 0.08) !important;
+            padding: 10px 12px !important;
+        }}
+        [data-testid="stExpander"] summary:hover {{
+            background: rgba(249, 113, 19, 0.14) !important;
         }}
         </style>
         """,
