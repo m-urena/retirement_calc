@@ -21,39 +21,49 @@ st.set_page_config(
 # --------------------------------------------------
 st.markdown(
     """
-    <style>
-    header { visibility: hidden; height: 0px; }
-    footer { visibility: hidden; height: 0px; }
-    #MainMenu { visibility: hidden; }
+    <script>
+    (function () {
+      const selectors = [
+        '[data-testid="stToolbar"]',
+        '[data-testid="stAppToolbar"]',
+        '[data-testid="stStatusWidget"]',
+        '[data-testid="stHeader"]',
+        '[data-testid="stFloatingActionButton"]',
+        'div[data-testid="stToolbarActionButton"]',
+      ];
 
-    /* Newer Streamlit floating UI */
-    [data-testid="stToolbar"] { display: none !important; }
-    [data-testid="stAppToolbar"] { display: none !important; }
-    [data-testid="stStatusWidget"] { display: none !important; }
-    [data-testid="stHeader"] { display: none !important; }
+      function nuke() {
+        try {
+          selectors.forEach((sel) => {
+            document.querySelectorAll(sel).forEach((el) => el.remove());
+          });
 
-    /* This is the bottom-right floating action area in many builds */
-    [data-testid="stFloatingActionButton"] { display: none !important; }
+          // Extra fallback: remove any fixed bottom-right overlay that looks like a Streamlit control
+          document.querySelectorAll('div').forEach((el) => {
+            const style = window.getComputedStyle(el);
+            if (style.position === "fixed" && style.right === "16px" && style.bottom === "16px") {
+              el.remove();
+            }
+          });
+        } catch (e) {}
+      }
 
-    /* Fallbacks used across versions */
-    .st-emotion-cache-1jicfl2 { display: none !important; } /* sometimes the floating toolbar wrapper */
-    .st-emotion-cache-1f3w014 { display: none !important; } /* sometimes the status widget wrapper */
+      // Run now, and keep running as Streamlit re-renders
+      nuke();
+      const obs = new MutationObserver(nuke);
+      obs.observe(document.documentElement, { childList: true, subtree: true });
 
-    /* Last-resort: hide Streamlit's fixed bottom-right overlay container */
-    div[class*="st-emotion-cache"][style*="position: fixed"][style*="bottom:"] {
-      display: none !important;
-    }
-
-    :root { color-scheme: light; }
-
-    html, body, .stApp {
-        overflow-x: hidden;
-        background-color: white !important;
-        color: #111827;
-    }
-    </style>
+      // Also run a few times after load
+      let i = 0;
+      const iv = setInterval(() => {
+        nuke();
+        i += 1;
+        if (i > 20) clearInterval(iv);
+      }, 250);
+    })();
+    </script>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
