@@ -42,24 +42,11 @@ st.markdown(
         background: #FFFFFF !important;
         overflow-x: hidden;
     }}
-    body, .stApp, p, span, label {{
-        color: {TEXT} !important;
-    }}
-    h1, h2, h3, h4, h5, h6,
-    .stTitle, .stHeader, .stSubheader,
-    [data-testid="stMarkdownContainer"],
-    [data-testid="stMarkdownContainer"] * {{
-        color: {TEXT} !important;
-    }}
-    [data-testid="stWidgetLabel"] p,
-    [data-testid="stWidgetLabel"] label {{
-        color: {TEXT} !important;
-    }}
 
     input, textarea {{
         background-color: {INPUT_BG} !important;
         -webkit-text-fill-color: {TEXT} !important;
-        border: 1px solid rgba(17, 24, 39, 0.08) !important;
+        border: 1px solid transparent !important;
         border-radius: 10px !important;
         caret-color: {TEXT} !important;
     }}
@@ -78,7 +65,7 @@ st.markdown(
     [data-baseweb="textarea"] > div,
     [data-baseweb="select"] > div {{
         background-color: {INPUT_BG} !important;
-        border-color: rgba(17, 24, 39, 0.08) !important;
+        border-color: transparent !important;
         border-radius: 10px !important;
     }}
     [data-baseweb="select"] > div:focus-within {{
@@ -94,7 +81,7 @@ st.markdown(
     [data-testid="stNumberInput"] button {{
         background-color: {INPUT_BG} !important;
         color: {TEXT} !important;
-        border-color: rgba(17, 24, 39, 0.08) !important;
+        border-color: transparent !important;
         border-radius: 8px !important;
     }}
     [data-testid="stNumberInput"] div:focus-within {{
