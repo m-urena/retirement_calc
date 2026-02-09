@@ -27,7 +27,6 @@ st.set_page_config(
 
 # --------------------------------------------------
 # Global CSS (chrome hide + spacing + "always readable" widget styles)
-# This is the permanent fix for mobile/browser dark-mode auto-theming.
 # --------------------------------------------------
 st.markdown(
     f"""
@@ -56,7 +55,6 @@ st.markdown(
     :root, html, body, .stApp {{
         color-scheme: light !important;
         background: {BG} !important;
-        color: {TEXT} !important;
     }}
     html, body, .stApp {{
         overflow-x: hidden;
@@ -64,20 +62,17 @@ st.markdown(
 
     /* Text everywhere (defensive) */
     * {{
-        color: {TEXT};
     }}
 
     /* Widget labels */
     [data-testid="stWidgetLabel"] p,
     [data-testid="stWidgetLabel"] label,
     label {{
-        color: {TEXT} !important;
     }}
 
     /* Inputs: text + number */
     input, textarea {{
         background-color: {INPUT_BG} !important;
-        color: {TEXT} !important;
         -webkit-text-fill-color: {TEXT} !important;
         border: 1px solid {BORDER} !important;
         border-radius: 10px !important;
@@ -101,7 +96,6 @@ st.markdown(
         background-color: {INPUT_BG} !important;
         border-color: {BORDER} !important;
         border-radius: 10px !important;
-        color: {TEXT} !important;
     }}
     [data-baseweb="select"] > div:focus-within {{
         border-color: {ACCENT} !important;
