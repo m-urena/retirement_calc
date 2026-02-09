@@ -9,15 +9,10 @@ import base64
 ACCENT = "#F97113"
 ACCENT_HOVER = "#E5620F"
 ACCENT_SOFT = "rgba(249, 113, 19, 0.10)"
-TEXT = "#111827"
-BG = "#FFFFFF"
+TEXT = "#000000"
 INPUT_BG = "#F3F4F6"
-BORDER = "rgba(17, 24, 39, 0.18)"
-PLACEHOLDER = "rgba(17, 24, 39, 0.55)"
+PLACEHOLDER = "rgba(0, 0, 0, 0.55)"
 
-# --------------------------------------------------
-# Streamlit Page Config (iframe-ready)
-# --------------------------------------------------
 st.set_page_config(
     page_title="Bison Wealth 401(k) Growth Simulator",
     page_icon="🦬",
@@ -25,13 +20,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --------------------------------------------------
-# Global CSS (chrome hide + spacing + "always readable" widget styles)
-# --------------------------------------------------
 st.markdown(
     f"""
     <style>
-    /* Kill Streamlit chrome */
     header {{ visibility: hidden !important; height: 0 !important; }}
     [data-testid="stHeader"] {{ display: none !important; height: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; }}
     [data-testid="stDecoration"] {{ display: none !important; }}
@@ -41,40 +32,34 @@ st.markdown(
     #MainMenu {{ visibility: hidden !important; }}
     footer {{ visibility: hidden !important; height: 0 !important; }}
 
-    /* Remove top whitespace */
     .block-container {{ padding-top: 0rem !important; padding-bottom: 1rem !important; }}
     [data-testid="stAppViewContainer"] {{ padding-top: 0rem !important; }}
     [data-testid="stMain"] {{ padding-top: 0rem !important; }}
     [data-testid="stVerticalBlock"] {{ gap: 0.25rem !important; }}
 
-    /*
-      Force light appearance on ALL browsers/phones.
-      - "color-scheme: light" tells the UA to render form controls in light mode.
-      - Explicit background/text colors prevent auto-darkening from breaking contrast.
-    */
-    :root, html, body, .stApp {{
-        color-scheme: light !important;
-        background: {BG} !important;
-    }}
     html, body, .stApp {{
+        color-scheme: light !important;
+        background: #FFFFFF !important;
         overflow-x: hidden;
     }}
-
-    /* Text everywhere (defensive) */
-    * {{
+    body, .stApp, p, span, label {{
+        color: {TEXT} !important;
     }}
-
-    /* Widget labels */
+    h1, h2, h3, h4, h5, h6,
+    .stTitle, .stHeader, .stSubheader,
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stMarkdownContainer"] * {{
+        color: {TEXT} !important;
+    }}
     [data-testid="stWidgetLabel"] p,
-    [data-testid="stWidgetLabel"] label,
-    label {{
+    [data-testid="stWidgetLabel"] label {{
+        color: {TEXT} !important;
     }}
 
-    /* Inputs: text + number */
     input, textarea {{
         background-color: {INPUT_BG} !important;
         -webkit-text-fill-color: {TEXT} !important;
-        border: 1px solid {BORDER} !important;
+        border: 1px solid rgba(17, 24, 39, 0.08) !important;
         border-radius: 10px !important;
         caret-color: {TEXT} !important;
     }}
@@ -89,12 +74,11 @@ st.markdown(
         outline: none !important;
     }}
 
-    /* BaseWeb containers used by Streamlit: selectbox + input wrappers */
     [data-baseweb="input"] > div,
     [data-baseweb="textarea"] > div,
     [data-baseweb="select"] > div {{
         background-color: {INPUT_BG} !important;
-        border-color: {BORDER} !important;
+        border-color: rgba(17, 24, 39, 0.08) !important;
         border-radius: 10px !important;
     }}
     [data-baseweb="select"] > div:focus-within {{
@@ -102,17 +86,15 @@ st.markdown(
         box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
     }}
 
-    /* Selectbox text + placeholder */
     [data-baseweb="select"] * {{
         color: {TEXT} !important;
         -webkit-text-fill-color: {TEXT} !important;
     }}
 
-    /* Number input +/- buttons */
     [data-testid="stNumberInput"] button {{
         background-color: {INPUT_BG} !important;
         color: {TEXT} !important;
-        border-color: {BORDER} !important;
+        border-color: rgba(17, 24, 39, 0.08) !important;
         border-radius: 8px !important;
     }}
     [data-testid="stNumberInput"] div:focus-within {{
@@ -121,7 +103,6 @@ st.markdown(
         border-radius: 10px !important;
     }}
 
-    /* Primary button */
     div.stButton > button:first-child {{
         background-color: {ACCENT} !important;
         color: white !important;
@@ -138,9 +119,8 @@ st.markdown(
         box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
     }}
 
-    /* Ensure Plotly container doesn't inherit weird dark styling */
     .js-plotly-plot, .plotly, .plot-container {{
-        background: {BG} !important;
+        background: #FFFFFF !important;
         color: {TEXT} !important;
     }}
     </style>
@@ -148,9 +128,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --------------------------------------------------
-# Brand fonts
-# --------------------------------------------------
 def _b64_file(path: Path) -> str:
     return base64.b64encode(path.read_bytes()).decode("utf-8")
 
@@ -213,9 +190,6 @@ def inject_brand_fonts():
 
 inject_brand_fonts()
 
-# --------------------------------------------------
-# Fixed colors
-# --------------------------------------------------
 plot_bg = "white"
 paper_bg = "white"
 grid_color = "#E0E0E0"
@@ -227,9 +201,6 @@ diff_color = help_color
 
 plot_template = "plotly_white"
 
-# --------------------------------------------------
-# Supabase Setup (safe)
-# --------------------------------------------------
 def get_secret(key):
     try:
         return st.secrets[key]
@@ -248,9 +219,6 @@ def create_supabase_client():
 
 supabase: Client | None = create_supabase_client()
 
-# --------------------------------------------------
-# Load Company Names
-# --------------------------------------------------
 @st.cache_data(show_spinner=False)
 def load_company_names():
     data_path = Path(__file__).resolve().parent / "401k Data.csv"
@@ -274,18 +242,12 @@ def load_company_names():
         )
     )
 
-# --------------------------------------------------
-# Helpers
-# --------------------------------------------------
 def parse_number(x):
     try:
         return float(str(x).replace(",", "").strip())
     except Exception:
         return None
 
-# --------------------------------------------------
-# Projection Logic
-# --------------------------------------------------
 @st.cache_data(show_spinner=False)
 def compute_projection(age, salary, balance):
     target_age = 65
@@ -328,16 +290,10 @@ def compute_projection(age, salary, balance):
         "with_help": project(balance, annual_contribs, r_help),
     })
 
-# --------------------------------------------------
-# Session Defaults
-# --------------------------------------------------
 st.session_state.setdefault("age_used", 41)
 st.session_state.setdefault("salary_used", 84000)
 st.session_state.setdefault("balance_used", 76500)
 
-# --------------------------------------------------
-# Inputs + Chart columns
-# --------------------------------------------------
 left, right = st.columns([1, 2])
 
 with left:
@@ -364,9 +320,6 @@ with left:
 
     calculate = st.button("Calculate", type="primary")
 
-# --------------------------------------------------
-# Handle Calculate
-# --------------------------------------------------
 if calculate:
     if salary_input is None or salary_input <= 0:
         st.error("Please enter a salary greater than $0 to run the projection.")
@@ -393,23 +346,14 @@ if calculate:
         except Exception:
             pass
 
-# --------------------------------------------------
-# Compute Projection
-# --------------------------------------------------
 df = compute_projection(
     st.session_state.age_used,
     st.session_state.salary_used,
     st.session_state.balance_used
 )
 
-# --------------------------------------------------
-# CTA above the chart (top, centered over graph)
-# --------------------------------------------------
 final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 
-# --------------------------------------------------
-# Calendly
-# --------------------------------------------------
 DEFAULT_CALENDLY = "https://powermy401k.com/contact-us/"
 ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
 
