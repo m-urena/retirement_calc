@@ -290,7 +290,7 @@ with left:
             0.0,
             50.0,
             float(cfg["employee_contrib_rate_pct"]),
-            step=0.25,
+            step=0.01,
         )
 
         cfg["employer_contrib_rate_pct"] = st.number_input(
@@ -298,7 +298,7 @@ with left:
             0.0,
             50.0,
             float(cfg["employer_contrib_rate_pct"]),
-            step=0.25,
+            step=0.01,
         )
 
         cfg["contrib_frequency_label"] = st.selectbox(
