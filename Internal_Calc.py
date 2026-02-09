@@ -183,12 +183,12 @@ def parse_number(x: str) -> Optional[float]:
 
 def pct_from_decimal(x: float) -> str:
     return f"{x*100:.2f}%"
-
+#model returns are the 5 year annualized total return of the howard SDBA models as of 01/01/2026
 MODEL_OPTIONS = {
-    "Core": 0.083,
-    "Balanced Growth": 0.094,
-    "Growth": 0.104,
-    "Aggressive": 0.114,
+    "Core": 0.0878,
+    "Balanced Growth": 0.0988,
+    "Growth": 0.1068,
+    "Aggressive": 0.1176,
 }
 
 MODEL_DROPDOWN_OPTIONS = list(MODEL_OPTIONS.keys()) + ["All Models"]
