@@ -38,6 +38,8 @@ st.markdown(
     [data-testid="stVerticalBlock"] {{ gap: 0.25rem !important; }}
 
     html, body, .stApp {{
+        color-scheme: light !important;
+        background: #FFFFFF !important;
         overflow-x: hidden;
     }}
 
