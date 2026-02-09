@@ -6,6 +6,15 @@ from supabase import create_client, Client
 from pathlib import Path
 import base64
 
+ACCENT = "#F97113"
+ACCENT_HOVER = "#E5620F"
+ACCENT_SOFT = "rgba(249, 113, 19, 0.10)"
+TEXT = "#111827"
+BG = "#FFFFFF"
+INPUT_BG = "#F3F4F6"
+BORDER = "rgba(17, 24, 39, 0.18)"
+PLACEHOLDER = "rgba(17, 24, 39, 0.55)"
+
 # --------------------------------------------------
 # Streamlit Page Config (iframe-ready)
 # --------------------------------------------------
@@ -17,70 +26,133 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# Hide Streamlit chrome (iframe widget)
+# Global CSS (chrome hide + spacing + "always readable" widget styles)
+# This is the permanent fix for mobile/browser dark-mode auto-theming.
 # --------------------------------------------------
 st.markdown(
-    """
+    f"""
     <style>
-    /* Hide ALL Streamlit chrome at the top */
-    header { visibility: hidden !important; height: 0 !important; }
-    [data-testid="stHeader"] { display: none !important; }
-    [data-testid="stDecoration"] { display: none !important; }
-    [data-testid="stToolbar"] { display: none !important; }
-    [data-testid="stAppToolbar"] { display: none !important; }
+    /* Kill Streamlit chrome */
+    header {{ visibility: hidden !important; height: 0 !important; }}
+    [data-testid="stHeader"] {{ display: none !important; height: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; }}
+    [data-testid="stDecoration"] {{ display: none !important; }}
+    [data-testid="stToolbar"] {{ display: none !important; }}
+    [data-testid="stAppToolbar"] {{ display: none !important; }}
+    [data-testid="collapsedControl"] {{ display: none !important; }}
+    #MainMenu {{ visibility: hidden !important; }}
+    footer {{ visibility: hidden !important; height: 0 !important; }}
 
-    /* Hide sidebar collapse control that sometimes lives in the header area */
-    [data-testid="collapsedControl"] { display: none !important; }
+    /* Remove top whitespace */
+    .block-container {{ padding-top: 0rem !important; padding-bottom: 1rem !important; }}
+    [data-testid="stAppViewContainer"] {{ padding-top: 0rem !important; }}
+    [data-testid="stMain"] {{ padding-top: 0rem !important; }}
+    [data-testid="stVerticalBlock"] {{ gap: 0.25rem !important; }}
 
-    /* Keep your existing menu hide */
-    #MainMenu { visibility: hidden !important; }
-    footer { visibility: hidden !important; height: 0 !important; }
-
-    :root { color-scheme: light; }
-
-    html, body, .stApp {
+    /*
+      Force light appearance on ALL browsers/phones.
+      - "color-scheme: light" tells the UA to render form controls in light mode.
+      - Explicit background/text colors prevent auto-darkening from breaking contrast.
+    */
+    :root, html, body, .stApp {{
+        color-scheme: light !important;
+        background: {BG} !important;
+        color: {TEXT} !important;
+    }}
+    html, body, .stApp {{
         overflow-x: hidden;
-        background-color: white !important;
-        color: #111827;
-    }
+    }}
+
+    /* Text everywhere (defensive) */
+    * {{
+        color: {TEXT};
+    }}
+
+    /* Widget labels */
+    [data-testid="stWidgetLabel"] p,
+    [data-testid="stWidgetLabel"] label,
+    label {{
+        color: {TEXT} !important;
+    }}
+
+    /* Inputs: text + number */
+    input, textarea {{
+        background-color: {INPUT_BG} !important;
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+        border: 1px solid {BORDER} !important;
+        border-radius: 10px !important;
+        caret-color: {TEXT} !important;
+    }}
+    input::placeholder, textarea::placeholder {{
+        color: {PLACEHOLDER} !important;
+        -webkit-text-fill-color: {PLACEHOLDER} !important;
+        opacity: 1 !important;
+    }}
+    input:focus, textarea:focus {{
+        border-color: {ACCENT} !important;
+        box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
+        outline: none !important;
+    }}
+
+    /* BaseWeb containers used by Streamlit: selectbox + input wrappers */
+    [data-baseweb="input"] > div,
+    [data-baseweb="textarea"] > div,
+    [data-baseweb="select"] > div {{
+        background-color: {INPUT_BG} !important;
+        border-color: {BORDER} !important;
+        border-radius: 10px !important;
+        color: {TEXT} !important;
+    }}
+    [data-baseweb="select"] > div:focus-within {{
+        border-color: {ACCENT} !important;
+        box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
+    }}
+
+    /* Selectbox text + placeholder */
+    [data-baseweb="select"] * {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+
+    /* Number input +/- buttons */
+    [data-testid="stNumberInput"] button {{
+        background-color: {INPUT_BG} !important;
+        color: {TEXT} !important;
+        border-color: {BORDER} !important;
+        border-radius: 8px !important;
+    }}
+    [data-testid="stNumberInput"] div:focus-within {{
+        border-color: {ACCENT} !important;
+        box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
+        border-radius: 10px !important;
+    }}
+
+    /* Primary button */
+    div.stButton > button:first-child {{
+        background-color: {ACCENT} !important;
+        color: white !important;
+        border-color: {ACCENT} !important;
+        font-weight: 700 !important;
+        border-radius: 10px !important;
+    }}
+    div.stButton > button:first-child:hover {{
+        background-color: {ACCENT_HOVER} !important;
+        border-color: {ACCENT_HOVER} !important;
+    }}
+    div.stButton > button:first-child:focus {{
+        outline: none !important;
+        box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
+    }}
+
+    /* Ensure Plotly container doesn't inherit weird dark styling */
+    .js-plotly-plot, .plotly, .plot-container {{
+        background: {BG} !important;
+        color: {TEXT} !important;
+    }}
     </style>
     """,
     unsafe_allow_html=True,
 )
-st.markdown(
-    """
-    <style>
-    /* Remove top whitespace caused by Streamlit container padding */
-    .block-container {
-        padding-top: 0rem !important;
-        padding-bottom: 1rem !important;
-    }
-
-    /* In some versions, the main container uses these testids */
-    [data-testid="stAppViewContainer"] {
-        padding-top: 0rem !important;
-    }
-    [data-testid="stMain"] {
-        padding-top: 0rem !important;
-    }
-
-    /* If the hidden header still reserves space, force it to zero */
-    [data-testid="stHeader"] {
-        height: 0px !important;
-        min-height: 0px !important;
-        margin: 0px !important;
-        padding: 0px !important;
-    }
-
-    /* Optional: tighten the very first element spacing */
-    [data-testid="stVerticalBlock"] {
-        gap: 0.25rem !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 
 # --------------------------------------------------
 # Brand fonts
@@ -120,7 +192,7 @@ def inject_brand_fonts():
             font-display: swap;
         }}
 
-        html, body, .stApp, [class*="css"], [class*="st-"] {{
+        html, body, .stApp {{
             font-family: "Urbanist", sans-serif !important;
             font-weight: 400 !important;
         }}
@@ -140,18 +212,6 @@ def inject_brand_fonts():
             font-family: "Urbanist", sans-serif !important;
             font-weight: 600 !important;
         }}
-
-        div.stButton > button:first-child {{
-            background-color: #F97113;
-            color: white;
-            border-color: #F97113;
-            font-family: "Urbanist", sans-serif !important;
-            font-weight: 700 !important;
-        }}
-        div.stButton > button:first-child:hover {{
-            background-color: #E5620F;
-            border-color: #E5620F;
-        }}
         </style>
         """,
         unsafe_allow_html=True
@@ -160,7 +220,7 @@ def inject_brand_fonts():
 inject_brand_fonts()
 
 # --------------------------------------------------
-# Fixed (light-mode) colors
+# Fixed colors
 # --------------------------------------------------
 plot_bg = "white"
 paper_bg = "white"
@@ -168,7 +228,7 @@ grid_color = "#E0E0E0"
 axis_color = "#000000"
 
 baseline_color = "#9CA3AF"
-help_color = "#F97113"
+help_color = ACCENT
 diff_color = help_color
 
 plot_template = "plotly_white"
@@ -225,7 +285,7 @@ def load_company_names():
 # --------------------------------------------------
 def parse_number(x):
     try:
-        return float(x.replace(",", "").strip())
+        return float(str(x).replace(",", "").strip())
     except Exception:
         return None
 
@@ -373,9 +433,6 @@ with right:
         unsafe_allow_html=True
     )
 
-    # --------------------------------------------------
-    # Chart
-    # --------------------------------------------------
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
@@ -482,9 +539,6 @@ with right:
 
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    # --------------------------------------------------
-    # Legend (add extra spacing below legend so button doesn't crowd)
-    # --------------------------------------------------
     st.markdown(
         f"""
         <style>
@@ -504,7 +558,7 @@ with right:
             align-items: center;
             gap: 10px;
             font-size: 14px;
-            color: #000000;
+            color: {TEXT};
             white-space: nowrap;
         }}
         .bw-swatch {{
@@ -540,14 +594,11 @@ with right:
         unsafe_allow_html=True
     )
 
-    # --------------------------------------------------
-    # Schedule button (add more space above it)
-    # --------------------------------------------------
     st.markdown(
         f"""
         <div style="text-align:center; margin-top:26px;">
             <a href="{calendly_link}" target="_blank"
-               style="background-color:#F97113; color:white;
+               style="background-color:{ACCENT}; color:white;
                       padding:14px 28px; text-decoration:none;
                       border-radius:8px; font-size:18px;
                       font-family:'Urbanist', sans-serif; font-weight:700;">
@@ -558,9 +609,6 @@ with right:
         unsafe_allow_html=True
     )
 
-# --------------------------------------------------
-# Disclosure
-# --------------------------------------------------
 st.space("large")
 st.space("large")
 st.caption(
