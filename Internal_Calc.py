@@ -346,41 +346,17 @@ with left:
 
     age_input = st.number_input("Current age", 18, 100, int(st.session_state.age_used))
 
-    target_age_input = st.number_input(
-        "Retirement age",
-        min_value=max(40, int(age_input) + 1),
-        max_value=90,
-        value=int(cfg["target_age"]),
-        step=1,
-    )
+    target_age_input = st.number_input("Retirement age", min_value=max(1, int(age_input) + 1), max_value=100, value=int(cfg["target_age"]), step=1)
 
     salary_input = parse_number(st.text_input("Current annual salary ($)", f"{st.session_state.salary_used:,.0f}"))
     balance_input = parse_number(st.text_input("Current 401(k) balance ($)", f"{st.session_state.balance_used:,.0f}"))
 
     with st.expander("Assumptions", expanded=False):
-        cfg["salary_growth_rate_pct"] = st.number_input(
-            "Annual salary growth (%)",
-            0.0,
-            20.0,
-            float(cfg["salary_growth_rate_pct"]),
-            step=0.25,
-        )
+        cfg["salary_growth_rate_pct"] = st.number_input("Annual salary growth (%)", 0.0, 50.0, float(cfg["salary_growth_rate_pct"]), step=0.01)
 
-        cfg["employee_contrib_rate_pct"] = st.number_input(
-            "Employee contribution rate (%)",
-            0.0,
-            50.0,
-            float(cfg["employee_contrib_rate_pct"]),
-            step=0.01,
-        )
+        cfg["employee_contrib_rate_pct"] = st.number_input("Employee contribution rate (%)",0.0,50.0,float(cfg["employee_contrib_rate_pct"]),step=0.01)
 
-        cfg["employer_contrib_rate_pct"] = st.number_input(
-            "Employer contribution rate (%)",
-            0.0,
-            50.0,
-            float(cfg["employer_contrib_rate_pct"]),
-            step=0.01,
-        )
+        cfg["employer_contrib_rate_pct"] = st.number_input("Employer contribution rate (%)", 0.0, 50.0,float(cfg["employer_contrib_rate_pct"]),step=0.01)
 
         cfg["contrib_frequency_label"] = st.selectbox(
             "Contribution frequency",
