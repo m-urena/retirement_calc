@@ -65,46 +65,35 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-#keep input boxes light
+#text inside the input blocks
 st.markdown(
     """
     <style>
-    /* Keep input boxes white across mobile/browser dark mode */
-    input, textarea {
-        background-color: #FFFFFF !important;
-        color: #111827 !important;
-        -webkit-text-fill-color: #111827 !important;
-        border: 1px solid rgba(17, 24, 39, 0.18) !important;
-        box-shadow: none !important;
-        appearance: none !important;
-        -webkit-appearance: none !important;
-    }
+    @media (prefers-color-scheme: dark) {
+        /* Text typed into inputs */
+        input, textarea {
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+            caret-color: #FFFFFF !important;
+        }
 
-    input::placeholder, textarea::placeholder {
-        color: rgba(17, 24, 39, 0.55) !important;
-        -webkit-text-fill-color: rgba(17, 24, 39, 0.55) !important;
-        opacity: 1 !important;
-    }
+        /* Placeholder text */
+        input::placeholder, textarea::placeholder {
+            color: rgba(255, 255, 255, 0.65) !important;
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.65) !important;
+            opacity: 1 !important;
+        }
 
-    /* Streamlit uses BaseWeb wrappers for selectbox and some inputs */
-    [data-baseweb="input"] > div,
-    [data-baseweb="textarea"] > div,
-    [data-baseweb="select"] > div {
-        background-color: #FFFFFF !important;
-        border: 1px solid rgba(17, 24, 39, 0.18) !important;
-        box-shadow: none !important;
-    }
-
-    /* Keep selectbox text dark */
-    [data-baseweb="select"] * {
-        color: #111827 !important;
-        -webkit-text-fill-color: #111827 !important;
+        /* Streamlit BaseWeb selectbox text */
+        [data-baseweb="select"] * {
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+        }
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
 
 
 plot_bg = "white"
