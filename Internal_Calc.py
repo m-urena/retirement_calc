@@ -31,6 +31,42 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+st.markdown(
+    """
+    <style>
+    /* Keep labels + helper text readable even if browser forces dark-mode styles */
+    [data-testid="stWidgetLabel"] p,
+    [data-testid="stWidgetLabel"] label,
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] span,
+    [data-testid="stMarkdownContainer"] label,
+    [data-testid="stForm"] label,
+    .stCaption,
+    .stMarkdown,
+    .stTextInput label,
+    .stNumberInput label,
+    .stSelectbox label,
+    .stMultiSelect label,
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] summary *,
+    [data-testid="stExpander"] div,
+    [data-testid="stExpander"] div * {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+    }
+
+    /* Also keep input text dark (some phones flip it) */
+    input, textarea, select {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        caret-color: #111827 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 plot_bg = "white"
 paper_bg = "white"
 grid_color = "#E0E0E0"
