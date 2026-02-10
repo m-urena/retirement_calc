@@ -30,11 +30,10 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-#keep input text black
+
 st.markdown(
     """
     <style>
-    /* Keep labels + helper text readable even if browser forces dark-mode styles */
     [data-testid="stWidgetLabel"] p,
     [data-testid="stWidgetLabel"] label,
     [data-testid="stMarkdownContainer"] p,
@@ -55,7 +54,6 @@ st.markdown(
         -webkit-text-fill-color: #111827 !important;
     }
 
-    /* Also keep input text dark (some phones flip it) */
     input, textarea, select {
         color: #111827 !important;
         -webkit-text-fill-color: #111827 !important;
@@ -65,13 +63,11 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-#text inside the input blocks
+
 st.markdown(
     """
     <style>
     @media (prefers-color-scheme: dark) {
-
-        /* Text typed into ALL Streamlit inputs (including expanders) */
         input,
         textarea,
         [data-baseweb="input"] input,
@@ -86,7 +82,6 @@ st.markdown(
             caret-color: #FFFFFF !important;
         }
 
-        /* Placeholder text */
         input::placeholder,
         textarea::placeholder,
         [data-baseweb="input"] input::placeholder,
@@ -98,8 +93,7 @@ st.markdown(
             opacity: 1 !important;
         }
 
-        /* Selectbox: BaseWeb select text + the inner input used for search */
-        [data-baseweb="select"] * ,
+        [data-baseweb="select"] *,
         [data-baseweb="select"] input {
             color: #FFFFFF !important;
             -webkit-text-fill-color: #FFFFFF !important;
@@ -109,21 +103,17 @@ st.markdown(
             color: #FFFFFF !important;
             -webkit-text-fill-color: #FFFFFF !important;
         }
-        
-        /* Open menu items */
+
         div[role="listbox"],
         div[role="listbox"] * {
             color: #FFFFFF !important;
             -webkit-text-fill-color: #FFFFFF !important;
         }
-        
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
-
 
 plot_bg = "white"
 paper_bg = "white"
@@ -277,7 +267,7 @@ def parse_number(x: str) -> Optional[float]:
 
 def pct_from_decimal(x: float) -> str:
     return f"{x*100:.2f}%"
-#model returns are the 5 year annualized total return of the howard SDBA models as of 01/01/2026
+
 MODEL_OPTIONS = {
     "Core": 0.0878,
     "Balanced Growth": 0.0988,
@@ -286,17 +276,6 @@ MODEL_OPTIONS = {
 }
 
 MODEL_DROPDOWN_OPTIONS = list(MODEL_OPTIONS.keys()) + ["All Models"]
-
-CONTRIB_FREQ_OPTIONS = {
-    "Semi-monthly (24x/year)": 24,
-    "Bi-weekly (26x/year)": 26,
-}
-
-def build_pay_period_schedule(annual_amount: float, periods_per_year: int) -> list[float]:
-    if periods_per_year <= 0:
-        return []
-    amt = annual_amount / float(periods_per_year)
-    return [amt] * periods_per_year
 
 @st.cache_data(show_spinner=False)
 def compute_projection_one_line(age: int, salary: float, balance: float, cfg: Dict[str, Any], model_return: float) -> pd.DataFrame:
@@ -311,7 +290,7 @@ def compute_projection_one_line(age: int, salary: float, balance: float, cfg: Di
     employer_rate = float(cfg["employer_contrib_rate_pct"]) / 100.0
     annual_contrib_rate = employee_rate + employer_rate
 
-    periods_per_year = int(cfg["contributions_per_year"])
+    periods_per_year = 12
     r_period = (1.0 + float(model_return)) ** (1.0 / periods_per_year) - 1.0
 
     total = float(balance)
@@ -321,11 +300,11 @@ def compute_projection_one_line(age: int, salary: float, balance: float, cfg: Di
     for yr in range(1, years + 1):
         current_salary = salary * ((1.0 + salary_growth) ** (yr - 1))
         annual_contrib_amount = current_salary * annual_contrib_rate
-        contrib_schedule = build_pay_period_schedule(annual_contrib_amount, periods_per_year)
+        per_period_contrib = annual_contrib_amount / periods_per_year
 
-        for c in contrib_schedule:
+        for _ in range(periods_per_year):
             total *= (1.0 + r_period)
-            total += c
+            total += per_period_contrib
 
         ages.append(age + yr)
         vals.append(total)
@@ -344,9 +323,6 @@ cfg.setdefault("employee_contrib_rate_pct", 7.8)
 cfg.setdefault("employer_contrib_rate_pct", 4.6)
 cfg.setdefault("model_selection", "Core")
 
-cfg.setdefault("contrib_frequency_label", "Bi-weekly (26x/year)")
-cfg.setdefault("contributions_per_year", CONTRIB_FREQ_OPTIONS.get(cfg["contrib_frequency_label"], 26))
-
 if cfg.get("model_selection") not in MODEL_DROPDOWN_OPTIONS:
     cfg["model_selection"] = "Core"
 
@@ -358,28 +334,21 @@ with left:
     st.subheader("Inputs")
 
     age_input = st.number_input("Current age", 18, 100, int(st.session_state.age_used))
-
-    target_age_input = st.number_input("Retirement age", min_value=max(1, int(age_input) + 1), max_value=100, value=int(cfg["target_age"]), step=1)
+    target_age_input = st.number_input(
+        "Retirement age",
+        min_value=max(1, int(age_input) + 1),
+        max_value=100,
+        value=int(cfg["target_age"]),
+        step=1,
+    )
 
     salary_input = parse_number(st.text_input("Current annual salary ($)", f"{st.session_state.salary_used:,.0f}"))
     balance_input = parse_number(st.text_input("Current 401(k) balance ($)", f"{st.session_state.balance_used:,.0f}"))
 
     with st.expander("Assumptions", expanded=False):
         cfg["salary_growth_rate_pct"] = st.number_input("Annual salary growth (%)", 0.0, 50.0, float(cfg["salary_growth_rate_pct"]), step=0.01)
-
-        cfg["employee_contrib_rate_pct"] = st.number_input("Employee contribution rate (%)",0.0,50.0,float(cfg["employee_contrib_rate_pct"]),step=0.01)
-
-        cfg["employer_contrib_rate_pct"] = st.number_input("Employer contribution rate (%)", 0.0, 50.0,float(cfg["employer_contrib_rate_pct"]),step=0.01)
-
-        cfg["contrib_frequency_label"] = st.selectbox(
-            "Contribution frequency",
-            list(CONTRIB_FREQ_OPTIONS.keys()),
-            index=list(CONTRIB_FREQ_OPTIONS.keys()).index(cfg["contrib_frequency_label"])
-            if cfg["contrib_frequency_label"] in CONTRIB_FREQ_OPTIONS
-            else 0,
-            help="Annual contribution rate stays the same. Contributions are deposited at the end of each pay period.",
-        )
-        cfg["contributions_per_year"] = int(CONTRIB_FREQ_OPTIONS[cfg["contrib_frequency_label"]])
+        cfg["employee_contrib_rate_pct"] = st.number_input("Employee contribution rate (%)", 0.0, 50.0, float(cfg["employee_contrib_rate_pct"]), step=0.01)
+        cfg["employer_contrib_rate_pct"] = st.number_input("Employer contribution rate (%)", 0.0, 50.0, float(cfg["employer_contrib_rate_pct"]), step=0.01)
 
     model_choice = st.selectbox(
         "Model selection",
@@ -443,9 +412,7 @@ with right:
 
         final_lines.sort(key=lambda t: t[1], reverse=True)
 
-        annotation_html = "<br>".join(
-            [f"<b>{name}:</b> ${val:,.0f}" for name, val in final_lines]
-        )
+        annotation_html = "<br>".join([f"<b>{name}:</b> ${val:,.0f}" for name, val in final_lines])
 
         fig.add_annotation(
             xref="paper", yref="paper",
@@ -540,7 +507,6 @@ st.caption(
     f"Salary growth: {pct_from_decimal(salary_growth_dec)}. "
     f"Annual contributions: {pct_from_decimal(total_contrib_dec)} "
     f"({pct_from_decimal(employee_dec)} employee, {pct_from_decimal(employer_dec)} employer). "
-    f"Contribution frequency: {cfg['contrib_frequency_label']} (deposited at end of each pay period). "
     f"Retirement age: {int(cfg['target_age'])}. "
     f"Model selection: {cfg.get('model_selection', 'All Models')}."
 )
