@@ -30,7 +30,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
+#keep input text black
 st.markdown(
     """
     <style>
@@ -65,6 +65,46 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+#keep input boxes light
+st.markdown(
+    """
+    <style>
+    /* Keep input boxes white across mobile/browser dark mode */
+    input, textarea {
+        background-color: #FFFFFF !important;
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        border: 1px solid rgba(17, 24, 39, 0.18) !important;
+        box-shadow: none !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+    }
+
+    input::placeholder, textarea::placeholder {
+        color: rgba(17, 24, 39, 0.55) !important;
+        -webkit-text-fill-color: rgba(17, 24, 39, 0.55) !important;
+        opacity: 1 !important;
+    }
+
+    /* Streamlit uses BaseWeb wrappers for selectbox and some inputs */
+    [data-baseweb="input"] > div,
+    [data-baseweb="textarea"] > div,
+    [data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
+        border: 1px solid rgba(17, 24, 39, 0.18) !important;
+        box-shadow: none !important;
+    }
+
+    /* Keep selectbox text dark */
+    [data-baseweb="select"] * {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 
 plot_bg = "white"
