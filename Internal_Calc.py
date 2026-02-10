@@ -70,22 +70,37 @@ st.markdown(
     """
     <style>
     @media (prefers-color-scheme: dark) {
-        /* Text typed into inputs */
-        input, textarea {
+
+        /* Text typed into ALL Streamlit inputs (including expanders) */
+        input,
+        textarea,
+        [data-baseweb="input"] input,
+        [data-baseweb="textarea"] textarea,
+        [data-testid="stNumberInput"] input,
+        [data-testid="stTextInput"] input,
+        [data-testid="stTextArea"] textarea,
+        [data-testid="stExpander"] input,
+        [data-testid="stExpander"] textarea {
             color: #FFFFFF !important;
             -webkit-text-fill-color: #FFFFFF !important;
             caret-color: #FFFFFF !important;
         }
 
         /* Placeholder text */
-        input::placeholder, textarea::placeholder {
+        input::placeholder,
+        textarea::placeholder,
+        [data-baseweb="input"] input::placeholder,
+        [data-baseweb="textarea"] textarea::placeholder,
+        [data-testid="stExpander"] input::placeholder,
+        [data-testid="stExpander"] textarea::placeholder {
             color: rgba(255, 255, 255, 0.65) !important;
             -webkit-text-fill-color: rgba(255, 255, 255, 0.65) !important;
             opacity: 1 !important;
         }
 
-        /* Streamlit BaseWeb selectbox text */
-        [data-baseweb="select"] * {
+        /* Selectbox: BaseWeb select text + the inner input used for search */
+        [data-baseweb="select"] * ,
+        [data-baseweb="select"] input {
             color: #FFFFFF !important;
             -webkit-text-fill-color: #FFFFFF !important;
         }
@@ -94,6 +109,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
 
 
 plot_bg = "white"
