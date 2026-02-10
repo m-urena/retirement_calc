@@ -104,6 +104,19 @@ st.markdown(
             color: #FFFFFF !important;
             -webkit-text-fill-color: #FFFFFF !important;
         }
+        [data-testid="stSelectbox"] div[role="combobox"],
+        [data-testid="stSelectbox"] div[role="combobox"] * {
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+        }
+        
+        /* Open menu items */
+        div[role="listbox"],
+        div[role="listbox"] * {
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+        }
+        
     }
     </style>
     """,
