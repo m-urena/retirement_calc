@@ -48,11 +48,10 @@ st.markdown(
         color-scheme: light !important;
     }}
 
-    /* Force all labels, markdown, captions, helper text to stay dark */
+    /* Force labels, markdown text, captions, helper text to stay dark (NO blanket span rule) */
     [data-testid="stWidgetLabel"] p,
     [data-testid="stWidgetLabel"] label,
     [data-testid="stMarkdownContainer"] p,
-    [data-testid="stMarkdownContainer"] span,
     [data-testid="stMarkdownContainer"] label,
     [data-testid="stForm"] label,
     .stCaption,
@@ -65,7 +64,7 @@ st.markdown(
         -webkit-text-fill-color: {TEXT} !important;
     }}
 
-    /* Make sure expanders/summary text stays dark too */
+    /* Expanders/summary text stays dark */
     [data-testid="stExpander"] summary,
     [data-testid="stExpander"] summary *,
     [data-testid="stExpander"] div,
@@ -74,7 +73,6 @@ st.markdown(
         -webkit-text-fill-color: {TEXT} !important;
     }}
 
-    /* TextInput / TextArea / NumberInput (actual HTML inputs) */
     input, textarea {{
         background-color: {INPUT_BG} !important;
         color: {TEXT} !important;
@@ -96,7 +94,6 @@ st.markdown(
         outline: none !important;
     }}
 
-    /* Streamlit wraps many widgets in BaseWeb containers */
     [data-baseweb="input"] > div,
     [data-baseweb="textarea"] > div {{
         background-color: {INPUT_BG} !important;
@@ -104,7 +101,6 @@ st.markdown(
         border-radius: 10px !important;
     }}
 
-    /* NumberInput +/- buttons */
     [data-testid="stNumberInput"] button {{
         background-color: {INPUT_BG} !important;
         color: {TEXT} !important;
@@ -119,7 +115,6 @@ st.markdown(
         border-radius: 10px !important;
     }}
 
-    /* Selectbox (BaseWeb select) */
     [data-baseweb="select"] > div {{
         background-color: {INPUT_BG} !important;
         border-color: transparent !important;
@@ -132,23 +127,11 @@ st.markdown(
         border-radius: 10px !important;
     }}
 
-    /* Closed select text + placeholder */
     [data-baseweb="select"] * {{
         color: {TEXT} !important;
         -webkit-text-fill-color: {TEXT} !important;
     }}
 
-    /* Placeholder in the select (BaseWeb renders it as a span) */
-    [data-baseweb="select"] span {{
-        color: {TEXT} !important;
-        -webkit-text-fill-color: {TEXT} !important;
-    }}
-    [data-baseweb="select"] span[aria-disabled="true"] {{
-        color: {PLACEHOLDER} !important;
-        -webkit-text-fill-color: {PLACEHOLDER} !important;
-    }}
-
-    /* Inner input used when select is searchable */
     [data-baseweb="select"] input {{
         background-color: transparent !important;
         color: {TEXT} !important;
@@ -156,7 +139,6 @@ st.markdown(
         caret-color: {TEXT} !important;
     }}
 
-    /* Dropdown menu container */
     div[role="listbox"] {{
         background: #FFFFFF !important;
         color: {TEXT} !important;
@@ -167,7 +149,6 @@ st.markdown(
         -webkit-text-fill-color: {TEXT} !important;
     }}
 
-    /* Hover/selected row */
     div[role="option"][aria-selected="true"] {{
         background: rgba(249, 113, 19, 0.10) !important;
     }}
@@ -175,7 +156,6 @@ st.markdown(
         background: rgba(17, 24, 39, 0.06) !important;
     }}
 
-    /* Buttons */
     div.stButton > button:first-child {{
         background-color: {ACCENT} !important;
         color: white !important;
@@ -193,13 +173,11 @@ st.markdown(
         box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
     }}
 
-    /* Plotly wrapper stays white */
     .js-plotly-plot, .plotly, .plot-container {{
         background: #FFFFFF !important;
         color: {TEXT} !important;
     }}
 
-    /* Fight forced inversion on some browsers */
     @media (prefers-color-scheme: dark) {{
         html, body, .stApp {{
             background: #FFFFFF !important;
@@ -223,8 +201,8 @@ st.markdown(
         }}
     }}
 
-    /* Force the CTA dollar amount to stay orange even with other !important rules */
-    .bw-diff {{
+    /* CTA number must always be orange */
+    [data-testid="stMarkdownContainer"] span.bw-diff {{
         color: {ACCENT} !important;
         -webkit-text-fill-color: {ACCENT} !important;
         font-weight: 800 !important;
@@ -461,7 +439,6 @@ final_diff = df["with_help"].iloc[-1] - df["baseline"].iloc[-1]
 
 DEFAULT_CALENDLY = "https://powermy401k.com/contact-us/"
 ALT_CALENDLY = "https://calendly.com/placeholder-not-listed"
-
 calendly_link = ALT_CALENDLY if company == "My Company Is Not Listed" else DEFAULT_CALENDLY
 
 with right:
