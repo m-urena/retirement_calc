@@ -74,9 +74,7 @@ st.markdown(
         -webkit-text-fill-color: {TEXT} !important;
     }}
 
-    /* ------------------------------
-       TextInput / TextArea / NumberInput (actual HTML inputs)
-    -------------------------------- */
+    /* TextInput / TextArea / NumberInput (actual HTML inputs) */
     input, textarea {{
         background-color: {INPUT_BG} !important;
         color: {TEXT} !important;
@@ -121,13 +119,7 @@ st.markdown(
         border-radius: 10px !important;
     }}
 
-    /* ------------------------------
-       Selectbox (BaseWeb select)
-       We must style:
-       - closed combobox value + placeholder
-       - inner input used for search
-       - dropdown list + list items
-    -------------------------------- */
+    /* Selectbox (BaseWeb select) */
     [data-baseweb="select"] > div {{
         background-color: {INPUT_BG} !important;
         border-color: transparent !important;
@@ -156,7 +148,7 @@ st.markdown(
         -webkit-text-fill-color: {PLACEHOLDER} !important;
     }}
 
-    /* Inner input used when select is searchable (covers some mobile behaviors) */
+    /* Inner input used when select is searchable */
     [data-baseweb="select"] input {{
         background-color: transparent !important;
         color: {TEXT} !important;
@@ -175,7 +167,7 @@ st.markdown(
         -webkit-text-fill-color: {TEXT} !important;
     }}
 
-    /* Hover/selected row (BaseWeb often uses aria-selected) */
+    /* Hover/selected row */
     div[role="option"][aria-selected="true"] {{
         background: rgba(249, 113, 19, 0.10) !important;
     }}
@@ -183,9 +175,7 @@ st.markdown(
         background: rgba(17, 24, 39, 0.06) !important;
     }}
 
-    /* ------------------------------
-       Buttons
-    -------------------------------- */
+    /* Buttons */
     div.stButton > button:first-child {{
         background-color: {ACCENT} !important;
         color: white !important;
@@ -209,7 +199,7 @@ st.markdown(
         color: {TEXT} !important;
     }}
 
-    /* If a browser forces dark-mode inversion, fight it */
+    /* Fight forced inversion on some browsers */
     @media (prefers-color-scheme: dark) {{
         html, body, .stApp {{
             background: #FFFFFF !important;
@@ -231,6 +221,13 @@ st.markdown(
         div[role="listbox"] {{
             background: #FFFFFF !important;
         }}
+    }}
+
+    /* Force the CTA dollar amount to stay orange even with other !important rules */
+    .bw-diff {{
+        color: {ACCENT} !important;
+        -webkit-text-fill-color: {ACCENT} !important;
+        font-weight: 800 !important;
     }}
     </style>
     """,
@@ -306,8 +303,6 @@ axis_color = "#000000"
 
 baseline_color = "#9CA3AF"
 help_color = ACCENT
-diff_color = "#F97113"
-
 plot_template = "plotly_white"
 
 def get_secret(key):
@@ -405,6 +400,8 @@ st.session_state.setdefault("balance_used", 76500)
 
 left, right = st.columns([1, 2])
 
+company = None
+
 with left:
     st.subheader("Your Information")
 
@@ -422,7 +419,6 @@ with left:
         accept_new_options=True
     )
 
-    company = None
     if company_input and len(company_input.strip()) >= 3:
         normalized = company_input.strip().title()
         company = normalized if normalized in company_list else "My Company Is Not Listed"
@@ -472,9 +468,8 @@ with right:
     st.markdown(
         f"""
         <div style="text-align:center; font-size:26px; margin-top:6px; margin-bottom:10px;
-                    font-family:'Urbanist', sans-serif; font-weight:600;">
-            Is <span style="font-weight:800; color:{diff_color};">
-            ${final_diff:,.0f}</span> worth 30 minutes of your time?
+                    font-family:'Urbanist', sans-serif; font-weight:600; color:{TEXT};">
+            Is <span class="bw-diff">${final_diff:,.0f}</span> worth 30 minutes of your time?
         </div>
         """,
         unsafe_allow_html=True
