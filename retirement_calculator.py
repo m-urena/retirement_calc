@@ -306,7 +306,7 @@ axis_color = "#000000"
 
 baseline_color = "#9CA3AF"
 help_color = ACCENT
-diff_color = help_color
+diff_color = ACCENT
 
 plot_template = "plotly_white"
 
