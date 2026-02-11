@@ -38,61 +38,158 @@ st.markdown(
     [data-testid="stVerticalBlock"] {{ gap: 0.25rem !important; }}
 
     html, body, .stApp {{
-        color-scheme: light !important;
         background: #FFFFFF !important;
         overflow-x: hidden;
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
     }}
 
+    :root {{
+        color-scheme: light !important;
+    }}
+
+    /* Force all labels, markdown, captions, helper text to stay dark */
+    [data-testid="stWidgetLabel"] p,
+    [data-testid="stWidgetLabel"] label,
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] span,
+    [data-testid="stMarkdownContainer"] label,
+    [data-testid="stForm"] label,
+    .stCaption,
+    .stMarkdown,
+    .stTextInput label,
+    .stNumberInput label,
+    .stSelectbox label,
+    .stMultiSelect label {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+
+    /* Make sure expanders/summary text stays dark too */
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] summary *,
+    [data-testid="stExpander"] div,
+    [data-testid="stExpander"] div * {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+
+    /* ------------------------------
+       TextInput / TextArea / NumberInput (actual HTML inputs)
+    -------------------------------- */
     input, textarea {{
         background-color: {INPUT_BG} !important;
+        color: {TEXT} !important;
         -webkit-text-fill-color: {TEXT} !important;
         border: 1px solid transparent !important;
         border-radius: 10px !important;
         caret-color: {TEXT} !important;
     }}
+
     input::placeholder, textarea::placeholder {{
         color: {PLACEHOLDER} !important;
         -webkit-text-fill-color: {PLACEHOLDER} !important;
         opacity: 1 !important;
     }}
+
     input:focus, textarea:focus {{
         border-color: {ACCENT} !important;
         box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
         outline: none !important;
     }}
 
+    /* Streamlit wraps many widgets in BaseWeb containers */
     [data-baseweb="input"] > div,
-    [data-baseweb="textarea"] > div,
-    [data-baseweb="select"] > div {{
+    [data-baseweb="textarea"] > div {{
         background-color: {INPUT_BG} !important;
         border-color: transparent !important;
         border-radius: 10px !important;
     }}
-    [data-baseweb="select"] > div:focus-within {{
-        border-color: {ACCENT} !important;
-        box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
-    }}
 
-    [data-baseweb="select"] * {{
-        color: {TEXT} !important;
-        -webkit-text-fill-color: {TEXT} !important;
-    }}
-
+    /* NumberInput +/- buttons */
     [data-testid="stNumberInput"] button {{
         background-color: {INPUT_BG} !important;
         color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
         border-color: transparent !important;
         border-radius: 8px !important;
     }}
+
     [data-testid="stNumberInput"] div:focus-within {{
         border-color: {ACCENT} !important;
         box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
         border-radius: 10px !important;
     }}
 
+    /* ------------------------------
+       Selectbox (BaseWeb select)
+       We must style:
+       - closed combobox value + placeholder
+       - inner input used for search
+       - dropdown list + list items
+    -------------------------------- */
+    [data-baseweb="select"] > div {{
+        background-color: {INPUT_BG} !important;
+        border-color: transparent !important;
+        border-radius: 10px !important;
+    }}
+
+    [data-baseweb="select"] > div:focus-within {{
+        border-color: {ACCENT} !important;
+        box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
+        border-radius: 10px !important;
+    }}
+
+    /* Closed select text + placeholder */
+    [data-baseweb="select"] * {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+
+    /* Placeholder in the select (BaseWeb renders it as a span) */
+    [data-baseweb="select"] span {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+    [data-baseweb="select"] span[aria-disabled="true"] {{
+        color: {PLACEHOLDER} !important;
+        -webkit-text-fill-color: {PLACEHOLDER} !important;
+    }}
+
+    /* Inner input used when select is searchable (covers some mobile behaviors) */
+    [data-baseweb="select"] input {{
+        background-color: transparent !important;
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+        caret-color: {TEXT} !important;
+    }}
+
+    /* Dropdown menu container */
+    div[role="listbox"] {{
+        background: #FFFFFF !important;
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+    div[role="listbox"] * {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+
+    /* Hover/selected row (BaseWeb often uses aria-selected) */
+    div[role="option"][aria-selected="true"] {{
+        background: rgba(249, 113, 19, 0.10) !important;
+    }}
+    div[role="option"]:hover {{
+        background: rgba(17, 24, 39, 0.06) !important;
+    }}
+
+    /* ------------------------------
+       Buttons
+    -------------------------------- */
     div.stButton > button:first-child {{
         background-color: {ACCENT} !important;
         color: white !important;
+        -webkit-text-fill-color: white !important;
         border-color: {ACCENT} !important;
         font-weight: 700 !important;
         border-radius: 10px !important;
@@ -106,9 +203,34 @@ st.markdown(
         box-shadow: 0 0 0 0.2rem {ACCENT_SOFT} !important;
     }}
 
+    /* Plotly wrapper stays white */
     .js-plotly-plot, .plotly, .plot-container {{
         background: #FFFFFF !important;
         color: {TEXT} !important;
+    }}
+
+    /* If a browser forces dark-mode inversion, fight it */
+    @media (prefers-color-scheme: dark) {{
+        html, body, .stApp {{
+            background: #FFFFFF !important;
+            color: {TEXT} !important;
+            -webkit-text-fill-color: {TEXT} !important;
+        }}
+
+        input, textarea {{
+            background-color: {INPUT_BG} !important;
+            color: {TEXT} !important;
+            -webkit-text-fill-color: {TEXT} !important;
+            caret-color: {TEXT} !important;
+        }}
+
+        [data-baseweb="select"] > div {{
+            background-color: {INPUT_BG} !important;
+        }}
+
+        div[role="listbox"] {{
+            background: #FFFFFF !important;
+        }}
     }}
     </style>
     """,
