@@ -342,32 +342,31 @@ def compute_projection(age, salary, balance):
         })
 
     years = target_age - age
-    num_points = years + 1
 
     salary_growth_rate = 0.03
     contribution_rate = 0.078 + 0.046
     r_no_help = 0.0819
     r_help = r_no_help + 0.0332
 
-    salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(num_points)]
+    salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years)]
     annual_contribs = [s * contribution_rate for s in salaries]
 
     def project(start, contribs, rate):
         total = start
-        out = [start]
+        out = [total]
         monthly_rate = (1 + rate) ** (1 / 12)
-        monthly_factor = monthly_rate ** 12
-        contrib_multiplier = (monthly_factor - 1) / (monthly_rate - 1)
+        annual_factor = monthly_rate ** 12
+        contrib_multiplier = (annual_factor - 1) / (monthly_rate - 1)
 
         for yearly in contribs:
             monthly_contrib = yearly / 12
-            total = total * monthly_factor + monthly_contrib * contrib_multiplier
+            total = total * annual_factor + monthly_contrib * contrib_multiplier
             out.append(total)
 
-        return out[:num_points]
+        return out
 
     return pd.DataFrame({
-        "age": list(range(age, age + num_points)),
+        "age": list(range(age, target_age + 1)),
         "baseline": project(balance, annual_contribs, r_no_help),
         "with_help": project(balance, annual_contribs, r_help),
     })
