@@ -278,19 +278,28 @@ MODEL_OPTIONS = {
 MODEL_DROPDOWN_OPTIONS = list(MODEL_OPTIONS.keys()) + ["All Models"]
 
 @st.cache_data(show_spinner=False)
-def compute_projection_one_line(age: int, salary: float, balance: float, cfg: Dict[str, Any], model_return: float) -> pd.DataFrame:
+def compute_projection_one_line(
+    age: int,
+    salary: float,
+    balance: float,
+    cfg: Dict[str, Any],
+    model_return: float
+) -> pd.DataFrame:
     target_age = int(cfg["target_age"])
-    if age >= target_age or salary <= 0:
+
+    end_age = target_age + 1
+    periods_per_year = 24
+
+    if age >= end_age or salary <= 0:
         return pd.DataFrame({"age": [age], "value": [balance]})
 
-    years = target_age - age
+    years = end_age - age
 
     salary_growth = float(cfg["salary_growth_rate_pct"]) / 100.0
     employee_rate = float(cfg["employee_contrib_rate_pct"]) / 100.0
     employer_rate = float(cfg["employer_contrib_rate_pct"]) / 100.0
     annual_contrib_rate = employee_rate + employer_rate
 
-    periods_per_year = 12
     r_period = (1.0 + float(model_return)) ** (1.0 / periods_per_year) - 1.0
 
     total = float(balance)
@@ -310,6 +319,7 @@ def compute_projection_one_line(age: int, salary: float, balance: float, cfg: Di
         vals.append(total)
 
     return pd.DataFrame({"age": ages, "value": vals})
+
 
 st.session_state.setdefault("age_used", 42)
 st.session_state.setdefault("salary_used", 84000.0)
