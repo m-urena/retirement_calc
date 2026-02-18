@@ -332,16 +332,12 @@ def parse_number(x):
 
 @st.cache_data(show_spinner=False)
 def compute_projection(age, salary, balance):
-    target_age = 65
+    end_age = 66  
 
-    if age >= target_age or salary <= 0:
-        return pd.DataFrame({
-            "age": [age],
-            "baseline": [balance],
-            "with_help": [balance]
-        })
+    if age >= end_age or salary <= 0:
+        return pd.DataFrame({"age": [age], "baseline": [balance], "with_help": [balance]})
 
-    years = target_age - age
+    years = end_age - age  # number of full years to simulate
 
     salary_growth_rate = 0.03
     contribution_rate = 0.078 + 0.046
@@ -366,11 +362,10 @@ def compute_projection(age, salary, balance):
         return out
 
     return pd.DataFrame({
-        "age": list(range(age, target_age + 1)),
+        "age": list(range(age, end_age + 1)),  # includes 66
         "baseline": project(balance, annual_contribs, r_no_help),
         "with_help": project(balance, annual_contribs, r_help),
     })
-
 st.session_state.setdefault("age_used", 41)
 st.session_state.setdefault("salary_used", 84000)
 st.session_state.setdefault("balance_used", 76500)
