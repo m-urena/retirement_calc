@@ -332,12 +332,17 @@ def parse_number(x):
 
 @st.cache_data(show_spinner=False)
 def compute_projection(age, salary, balance):
-    end_age = 66  
+    end_age = 66
+    periods_per_year = 24
 
     if age >= end_age or salary <= 0:
-        return pd.DataFrame({"age": [age], "baseline": [balance], "with_help": [balance]})
+        return pd.DataFrame({
+            "age": [age],
+            "baseline": [balance],
+            "with_help": [balance]
+        })
 
-    years = end_age - age  # number of full years to simulate
+    years = end_age - age
 
     salary_growth_rate = 0.03
     contribution_rate = 0.078 + 0.046
@@ -347,25 +352,27 @@ def compute_projection(age, salary, balance):
     salaries = [salary * ((1 + salary_growth_rate) ** yr) for yr in range(years)]
     annual_contribs = [s * contribution_rate for s in salaries]
 
-    def project(start, contribs, rate):
+    def project(start, contribs, annual_rate):
         total = start
         out = [total]
-        monthly_rate = (1 + rate) ** (1 / 12)
-        annual_factor = monthly_rate ** 12
-        contrib_multiplier = (annual_factor - 1) / (monthly_rate - 1)
+
+        per_rate = (1 + annual_rate) ** (1 / periods_per_year) - 1
+        annual_factor = (1 + per_rate) ** periods_per_year
+        contrib_multiplier = (annual_factor - 1) / per_rate
 
         for yearly in contribs:
-            monthly_contrib = yearly / 12
-            total = total * annual_factor + monthly_contrib * contrib_multiplier
+            per_contrib = yearly / periods_per_year
+            total = total * annual_factor + per_contrib * contrib_multiplier
             out.append(total)
 
         return out
 
     return pd.DataFrame({
-        "age": list(range(age, end_age + 1)),  # includes 66
+        "age": list(range(age, end_age + 1)),
         "baseline": project(balance, annual_contribs, r_no_help),
         "with_help": project(balance, annual_contribs, r_help),
     })
+    
 st.session_state.setdefault("age_used", 41)
 st.session_state.setdefault("salary_used", 84000)
 st.session_state.setdefault("balance_used", 76500)
